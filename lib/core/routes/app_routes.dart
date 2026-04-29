@@ -3,6 +3,7 @@ class AppRoutes {
 
   // Auth
   static const String login = '/login';
+  static const String otp = '/otp';
 
   // Main
   static const String wallet = '/wallet';

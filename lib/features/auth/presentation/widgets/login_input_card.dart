@@ -8,11 +8,13 @@ class LoginInputCard extends StatelessWidget {
     required this.controller,
     required this.focusNode,
     required this.onContinue,
+    this.isLoading = false,
   });
 
   final TextEditingController controller;
   final FocusNode focusNode;
   final VoidCallback onContinue;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -28,12 +30,13 @@ class LoginInputCard extends StatelessWidget {
         children: [
           // Label
           Padding(
-            padding: const EdgeInsets.only(left: AppSpacing.xs, bottom: AppSpacing.xs),
+            padding: const EdgeInsets.only(
+              left: AppSpacing.xs,
+              bottom: AppSpacing.xs,
+            ),
             child: Text(
               'MOBILE NUMBER',
-              style: AppTypography.labelSm.copyWith(
-                color: AppColors.primary,
-              ),
+              style: AppTypography.labelSm.copyWith(color: AppColors.primary),
             ),
           ),
 
@@ -46,26 +49,42 @@ class LoginInputCard extends StatelessWidget {
               keyboardType: TextInputType.phone,
               inputFormatters: [
                 FilteringTextInputFormatter.digitsOnly,
-                _PhoneNumberFormatter(),
+             //   _IndianPhoneFormatter(),
               ],
               style: AppTypography.bodyMd.copyWith(color: AppColors.onSurface),
               decoration: InputDecoration(
-                hintText: '(555) 000-0000',
+                hintText: '98765 43210',
                 hintStyle: AppTypography.bodyMd.copyWith(
                   color: AppColors.outline,
                 ),
+                // Flag + country code prefix
                 prefixIcon: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
+                    horizontal: AppSpacing.sm,
                   ),
-                  child: Text(
-                    '+1',
-                    style: AppTypography.bodyMd.copyWith(
-                      color: AppColors.onSurfaceVariant,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('🇮🇳', style: TextStyle(fontSize: 18)),
+                      const SizedBox(width: 6),
+                      Text(
+                        '+91',
+                        style: AppTypography.bodyMd.copyWith(
+                          color: AppColors.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 1,
+                        height: 20,
+                        color: AppColors.outlineVariant,
+                      ),
+                    ],
                   ),
                 ),
-                prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                prefixIconConstraints:
+                    const BoxConstraints(minWidth: 0, minHeight: 0),
                 filled: true,
                 fillColor: AppColors.surfaceContainerLowest,
                 contentPadding: const EdgeInsets.symmetric(
@@ -98,31 +117,42 @@ class LoginInputCard extends StatelessWidget {
             width: double.infinity,
             height: 56,
             child: ElevatedButton(
-              onPressed: onContinue,
+              onPressed: isLoading ? null : onContinue,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.onPrimary,
                 shape: const StadiumBorder(),
                 elevation: 0,
                 shadowColor: Colors.transparent,
+                disabledBackgroundColor:
+                    AppColors.primary.withValues(alpha: 0.5),
               ).copyWith(
                 overlayColor: WidgetStateProperty.all(
-                  AppColors.onPrimary.withOpacity(0.08),
+                  AppColors.onPrimary.withValues(alpha: 0.08),
                 ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Continue',
-                    style: AppTypography.button.copyWith(
-                      color: AppColors.onPrimary,
+              child: isLoading
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: AppColors.onPrimary,
+                      ),
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Continue',
+                          style: AppTypography.button.copyWith(
+                            color: AppColors.onPrimary,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.base),
+                        const Icon(Icons.arrow_forward_rounded, size: 20),
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: AppSpacing.base),
-                  const Icon(Icons.arrow_forward_rounded, size: 20),
-                ],
-              ),
             ),
           ),
         ],
@@ -131,21 +161,20 @@ class LoginInputCard extends StatelessWidget {
   }
 }
 
-/// Formats digits as (XXX) XXX-XXXX
-class _PhoneNumberFormatter extends TextInputFormatter {
+/// Formats 10 digits as `XXXXX XXXXX` (Indian mobile format).
+class _IndianPhoneFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
     final digits = newValue.text.replaceAll(RegExp(r'\D'), '');
-    final buffer = StringBuffer();
+    final capped = digits.length > 10 ? digits.substring(0, 10) : digits;
 
-    for (int i = 0; i < digits.length && i < 10; i++) {
-      if (i == 0) buffer.write('(');
-      if (i == 3) buffer.write(') ');
-      if (i == 6) buffer.write('-');
-      buffer.write(digits[i]);
+    final buffer = StringBuffer();
+    for (int i = 0; i < capped.length; i++) {
+      if (i == 5) buffer.write(' ');
+      buffer.write(capped[i]);
     }
 
     final formatted = buffer.toString();
