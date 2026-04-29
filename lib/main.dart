@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'core/theme/theme.dart';
+import 'core/routes/app_router.dart';
 
 void main() {
   runApp(const MainApp());
@@ -14,11 +15,9 @@ class MainApp extends StatelessWidget {
       title: 'PocketPay',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: const Scaffold(
-        body: Center(
-          child: Text('PocketPay'),
-        ),
-      ),
+      initialRoute: AppRouter.initialRoute,
+      routes: AppRouter.routes,
+      onUnknownRoute: AppRouter.onUnknownRoute,
     );
   }
 }
