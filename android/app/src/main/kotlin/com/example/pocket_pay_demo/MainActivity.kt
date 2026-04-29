@@ -1,4 +1,4 @@
-package com.example.pocket_pay_demo
+package com.example.pocketPayDemo
 
 import io.flutter.embedding.android.FlutterActivity
 
