@@ -12,9 +12,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   AuthBloc({
     required SendOtpUseCase sendOtpUseCase,
     required VerifyOtpUseCase verifyOtpUseCase,
-  })  : _sendOtp = sendOtpUseCase,
-        _verifyOtp = verifyOtpUseCase,
-        super(const AuthInitial()) {
+  }) : _sendOtp = sendOtpUseCase,
+       _verifyOtp = verifyOtpUseCase,
+       super(const AuthInitial()) {
     on<SendOtpRequested>(_onSendOtp);
     on<VerifyOtpRequested>(_onVerifyOtp);
     on<ResendOtpRequested>(_onResendOtp);
@@ -34,10 +34,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     SendOtpRequested event,
     Emitter<AuthState> emit,
   ) async {
-
-
-    try {    emit(const AuthLoading());
-    _lastPhoneNumber = event.phoneNumber;
+    try {
+      emit(const AuthLoading());
+      _lastPhoneNumber = event.phoneNumber;
       final verificationId = await _sendOtp(phoneNumber: event.phoneNumber);
       _verificationId = verificationId;
       emit(OtpSent(event.phoneNumber));
@@ -63,7 +62,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         smsCode: event.smsCode,
       );
       emit(AuthAuthenticated(user));
-    } catch (e) { log(e.toString());
+    } catch (e) {
+      log(e.toString());
       emit(AuthError(e.toString().replaceFirst('Exception: ', '')));
     }
   }
@@ -79,7 +79,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final verificationId = await _sendOtp(phoneNumber: _lastPhoneNumber!);
       _verificationId = verificationId;
       emit(OtpSent(_lastPhoneNumber!));
-    } catch (e) { log(e.toString());
+    } catch (e) {
+      log(e.toString());
       emit(AuthError(e.toString().replaceFirst('Exception: ', '')));
     }
   }

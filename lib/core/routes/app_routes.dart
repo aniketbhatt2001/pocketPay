@@ -7,6 +7,7 @@ class AppRoutes {
   // Auth
   static const String login = '/login';
   static const String otp = '/otp';
+  static const String mpin = '/mpin';
 
   // Main
   static const String wallet = '/wallet';
