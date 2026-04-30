@@ -161,26 +161,3 @@ class LoginInputCard extends StatelessWidget {
   }
 }
 
-/// Formats 10 digits as `XXXXX XXXXX` (Indian mobile format).
-class _IndianPhoneFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    final digits = newValue.text.replaceAll(RegExp(r'\D'), '');
-    final capped = digits.length > 10 ? digits.substring(0, 10) : digits;
-
-    final buffer = StringBuffer();
-    for (int i = 0; i < capped.length; i++) {
-      if (i == 5) buffer.write(' ');
-      buffer.write(capped[i]);
-    }
-
-    final formatted = buffer.toString();
-    return TextEditingValue(
-      text: formatted,
-      selection: TextSelection.collapsed(offset: formatted.length),
-    );
-  }
-}

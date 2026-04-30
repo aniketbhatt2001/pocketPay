@@ -1,6 +1,9 @@
 class AppRoutes {
   AppRoutes._();
 
+  // Splash
+  static const String splash = '/';
+
   // Auth
   static const String login = '/login';
   static const String otp = '/otp';

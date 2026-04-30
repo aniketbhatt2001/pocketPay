@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/auth_user.dart';
 import '../../domain/usecases/send_otp_usecase.dart';
@@ -32,17 +34,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     SendOtpRequested event,
     Emitter<AuthState> emit,
   ) async {
-    emit(const AuthLoading());
-    _lastPhoneNumber = event.phoneNumber;
 
-    try {
-      // sendOtp now returns a Future<String> that only resolves once Firebase
-      // has actually sent the SMS (or throws on failure). No callbacks cross
-      // the handler boundary, so emit is always called before the handler ends.
+
+    try {    emit(const AuthLoading());
+    _lastPhoneNumber = event.phoneNumber;
       final verificationId = await _sendOtp(phoneNumber: event.phoneNumber);
       _verificationId = verificationId;
       emit(OtpSent(event.phoneNumber));
     } catch (e) {
+      log(e.toString());
       emit(AuthError(e.toString().replaceFirst('Exception: ', '')));
     }
   }
@@ -63,7 +63,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         smsCode: event.smsCode,
       );
       emit(AuthAuthenticated(user));
-    } catch (e) {
+    } catch (e) { log(e.toString());
       emit(AuthError(e.toString().replaceFirst('Exception: ', '')));
     }
   }
@@ -79,7 +79,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final verificationId = await _sendOtp(phoneNumber: _lastPhoneNumber!);
       _verificationId = verificationId;
       emit(OtpSent(_lastPhoneNumber!));
-    } catch (e) {
+    } catch (e) { log(e.toString());
       emit(AuthError(e.toString().replaceFirst('Exception: ', '')));
     }
   }

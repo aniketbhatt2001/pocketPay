@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/theme.dart';
-import '../../../../core/services/firebase_auth_service.dart';
+import '../../../../core/services/supabase_auth_service.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/usecases/send_otp_usecase.dart';
 import '../../domain/usecases/verify_otp_usecase.dart';
@@ -18,7 +18,7 @@ class LoginScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final repo = AuthRepositoryImpl(FirebaseAuthService());
+    final repo = AuthRepositoryImpl(SupabaseAuthService());
     return BlocProvider(
       create: (_) => AuthBloc(
         sendOtpUseCase: SendOtpUseCase(repo),
@@ -61,6 +61,7 @@ class _LoginViewState extends State<_LoginView> {
       );
       return;
     }
+    print(_e164Phone);
     context.read<AuthBloc>().add(SendOtpRequested(_e164Phone));
   }
 

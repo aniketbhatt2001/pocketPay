@@ -1,60 +1,64 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import '../../../../core/services/firebase_auth_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthUser;
+
+import '../../../../core/services/supabase_auth_service.dart';
 import '../../domain/entities/auth_user.dart';
 import '../../domain/repositories/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
-  AuthRepositoryImpl(this._service);
+  AuthRepositoryImpl(this._service)
+      : _db = Supabase.instance.client;
 
-  final FirebaseAuthService _service;
+  final SupabaseAuthService _service;
+  final SupabaseClient _db;
 
   @override
   AuthUser? get currentUser {
     final user = _service.currentUser;
     if (user == null) return null;
     return AuthUser(
-      uid: user.uid,
-      phoneNumber: user.phoneNumber ?? '',
+      uid: user.id,
+      phoneNumber: user.phone ?? '',
+      createdAt: DateTime.tryParse(user.createdAt),
     );
   }
 
   @override
   Future<String> sendOtp({required String phoneNumber}) {
-    return _service.verifyPhoneNumber(phoneNumber: phoneNumber);
+    // Returns the phone number as the "verificationId" — Supabase uses the
+    // phone number itself to identify the pending OTP session.
+    return _service.sendOtp(phoneNumber: phoneNumber);
   }
 
   @override
   Future<AuthUser> verifyOtp({
-    required String verificationId,
+    required String verificationId, // contains the phone number
     required String smsCode,
   }) async {
-    try {
-      final user = await _service.signInWithOtp(
-        verificationId: verificationId,
-        smsCode: smsCode,
-      );
-      
-      return AuthUser(
-        uid: user.uid,
-        phoneNumber: user.phoneNumber ?? '',
-        createdAt: user.metadata.creationTime,
-      );
-    } on FirebaseAuthException catch (e) {
-      throw Exception(_mapCode(e.code));
-    }
+    // 1. Verify OTP with Supabase Auth — also upserts the public.users row.
+    final user = await _service.verifyOtp(
+      phoneNumber: verificationId,
+      token: smsCode,
+    );
+
+    // 2. Fetch the full profile so AuthUser reflects any existing data.
+    final profile = await _db
+        .from('users')
+        .select()
+        .eq('id', user.id)
+        .maybeSingle();
+
+    return AuthUser(
+      uid: user.id,
+      phoneNumber: user.phone ?? verificationId,
+      createdAt: profile != null
+          ? DateTime.tryParse(profile['created_at'] as String? ?? '')
+          : DateTime.tryParse(user.createdAt),
+      fullName: profile?['full_name'] as String?,
+      mpinHash: profile?['mpin_hash'] as String?,
+      biometricEnabled: (profile?['biometric_enabled'] as bool?) ?? false,
+    );
   }
 
   @override
   Future<void> signOut() => _service.signOut();
-
-  String _mapCode(String code) {
-    switch (code) {
-      case 'invalid-verification-code':
-        return 'The code you entered is incorrect. Please try again.';
-      case 'session-expired':
-        return 'The verification code has expired. Please request a new one.';
-      default:
-        return 'Verification failed. Please try again.';
-    }
-  }
 }
