@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pocket_pay_demo/core/widgets/app_button.dart';
 import '../../../../core/theme/theme.dart';
 
 class LoginInputCard extends StatelessWidget {
@@ -113,25 +114,8 @@ class LoginInputCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
 
           // Continue button
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton(
-              onPressed: isLoading ? null : onContinue,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.onPrimary,
-                shape: const StadiumBorder(),
-                elevation: 0,
-                shadowColor: Colors.transparent,
-                disabledBackgroundColor:
-                    AppColors.primary.withValues(alpha: 0.5),
-              ).copyWith(
-                overlayColor: WidgetStateProperty.all(
-                  AppColors.onPrimary.withValues(alpha: 0.08),
-                ),
-              ),
-              child: isLoading
+
+          AppButton(  onPressed: isLoading ? null : onContinue ,child: isLoading
                   ? const SizedBox(
                       width: 24,
                       height: 24,
@@ -152,9 +136,8 @@ class LoginInputCard extends StatelessWidget {
                         const SizedBox(width: AppSpacing.base),
                         const Icon(Icons.arrow_forward_rounded, size: 20),
                       ],
-                    ),
-            ),
-          ),
+                    ),)
+       
         ],
       ),
     );

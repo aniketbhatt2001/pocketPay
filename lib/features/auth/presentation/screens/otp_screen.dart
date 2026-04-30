@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pocket_pay_demo/core/widgets/app_button.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../bloc/auth_bloc.dart';
@@ -95,7 +96,7 @@ class _OtpScreenState extends State<OtpScreen> {
                         const SizedBox(height: AppSpacing.xl),
                         _buildCard(context, isLoading),
                         const SizedBox(height: AppSpacing.md),
-                        _buildResendRow(context, isLoading),
+                     
                       ],
                     ),
                   ),
@@ -173,19 +174,7 @@ class _OtpScreenState extends State<OtpScreen> {
             },
           ),
           const SizedBox(height: AppSpacing.md),
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton(
-              onPressed: null, // auto-submits on OTP completion
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.onPrimary,
-                shape: const StadiumBorder(),
-                elevation: 0,
-                disabledBackgroundColor: AppColors.primary.withOpacity(0.6),
-              ),
-              child: isLoading
+AppButton(onPressed: null,  child: isLoading
                   ? const SizedBox(
                       width: 24,
                       height: 24,
@@ -199,58 +188,14 @@ class _OtpScreenState extends State<OtpScreen> {
                       style: AppTypography.button.copyWith(
                         color: AppColors.onPrimary.withOpacity(0.7),
                       ),
-                    ),
-            ),
-          ),
+                    ),),
+
+        
         ],
       ),
     );
   }
 
-  Widget _buildResendRow(BuildContext context, bool isLoading) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          "Didn't receive a code? ",
-          style: AppTypography.bodyMd.copyWith(
-            color: AppColors.onSurfaceVariant,
-            fontSize: 13,
-          ),
-        ),
-        _canResend
-            ? TextButton(
-                onPressed: isLoading
-                    ? null
-                    : () {
-                        context
-                            .read<AuthBloc>()
-                            .add(const ResendOtpRequested());
-                      },
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Text(
-                  'Resend',
-                  style: AppTypography.bodyMd.copyWith(
-                    fontSize: 13,
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              )
-            : Text(
-                'Resend in ${_secondsLeft}s',
-                style: AppTypography.bodyMd.copyWith(
-                  fontSize: 13,
-                  color: AppColors.outline,
-                ),
-              ),
-      ],
-    );
-  }
 }
 
 // ── App bar ──────────────────────────────────────────────────────────────────
