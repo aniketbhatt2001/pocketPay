@@ -13,7 +13,7 @@ import '../../features/splash/domain/usecases/check_session_usecase.dart';
 import '../../features/splash/presentation/cubit/splash_cubit.dart';
 import '../../features/splash/presentation/screens/splash_screen.dart';
 import '../../features/transaction/presentation/screens/transaction_screen.dart';
-import '../../features/wallet/presentation/screens/wallet_screen.dart';
+import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'app_routes.dart';
 
 class AppRouter {
@@ -35,7 +35,7 @@ class AppRouter {
     },
     AppRoutes.login: (_) => const LoginScreen(),
     AppRoutes.mpin: (_) => const MpinScreen(),
-    AppRoutes.wallet: (_) => const WalletScreen(),
+    AppRoutes.wallet: (_) => const DashboardScreen(),
     AppRoutes.payment: (_) => const PaymentScreen(),
     AppRoutes.transaction: (_) => const TransactionScreen(),
     AppRoutes.qrScanner: (_) => const QrScannerScreen(),

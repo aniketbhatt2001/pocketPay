@@ -1,20 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthUser;
+
 import '../../../../core/theme/theme.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/services/supabase_auth_service.dart';
+import '../../data/repositories/auth_repository_impl.dart';
+import '../../domain/usecases/set_mpin_usecase.dart';
+import '../bloc/mpin_cubit.dart';
 import '../widgets/login_background.dart';
 
 /// Screen for setting a new 6-digit MPIN.
-
-class MpinScreen extends StatefulWidget {
+class MpinScreen extends StatelessWidget {
   const MpinScreen({super.key});
 
   @override
-  State<MpinScreen> createState() => _MpinScreenState();
+  Widget build(BuildContext context) {
+    final repo = AuthRepositoryImpl(SupabaseAuthService());
+    return BlocProvider(
+      create: (_) => MpinCubit(setMpinUseCase: SetMpinUseCase(repo)),
+      child: const _MpinView(),
+    );
+  }
 }
 
-class _MpinScreenState extends State<MpinScreen>
+class _MpinView extends StatefulWidget {
+  const _MpinView();
+
+  @override
+  State<_MpinView> createState() => _MpinViewState();
+}
+
+class _MpinViewState extends State<_MpinView>
     with SingleTickerProviderStateMixin {
   static const int _pinLength = 6;
 
@@ -77,23 +96,21 @@ class _MpinScreenState extends State<MpinScreen>
       return;
     }
     setState(() => active.removeLast());
+    print("_activePin $_activePin");
   }
 
   void _onContinue() {
     if (!_canContinue) return;
-    // TODO: persist / hash the MPIN via a use-case / BLoC before navigating.
-    Navigator.of(
-      context,
-    ).pushNamedAndRemoveUntil(AppRoutes.wallet, (_) => false);
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return;
+    context.read<MpinCubit>().saveMpin(userId: userId, rawMpin: _pin.join());
   }
 
   Future<void> _triggerMismatch() async {
-    // Reset confirm row and shake it.
     setState(() => _confirmPin.clear());
     await _shakeController.forward(from: 0);
   }
 
-  // Called when the confirm row just filled up.
   void _checkMatch() {
     if (_confirmPin.length == _pinLength) {
       if (_pin.join() != _confirmPin.join()) {
@@ -114,41 +131,59 @@ class _MpinScreenState extends State<MpinScreen>
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.dark.copyWith(
-        statusBarColor: Colors.transparent,
-      ),
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: _MpinAppBar(onBack: () => Navigator.of(context).maybePop()),
-        body: Stack(
-          children: [
-            const LoginBackground(),
-            SafeArea(
-              top: false,
-              child: Column(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.containerMargin,
-                      ),
-                      child: Column(
-                        children: [
-                          const SizedBox(height: AppSpacing.lg),
-                          _buildHero(),
-                          const SizedBox(height: AppSpacing.lg),
-                          _buildPinRows(),
-                        ],
+    return BlocListener<MpinCubit, MpinState>(
+      listener: (context, state) {
+        if (state is MpinSuccess) {
+          Navigator.of(
+            context,
+          ).pushNamedAndRemoveUntil(AppRoutes.wallet, (_) => false);
+        } else if (state is MpinError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: AppRadius.borderLg),
+            ),
+          );
+        }
+      },
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.dark.copyWith(
+          statusBarColor: Colors.transparent,
+        ),
+        child: Scaffold(
+          backgroundColor: AppColors.background,
+          appBar: _MpinAppBar(onBack: () => Navigator.of(context).maybePop()),
+          body: Stack(
+            children: [
+              const LoginBackground(),
+              SafeArea(
+                top: false,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.containerMargin,
+                        ),
+                        child: Column(
+                          children: [
+                            const SizedBox(height: AppSpacing.lg),
+                            _buildHero(),
+                            const SizedBox(height: AppSpacing.lg),
+                            _buildPinRows(),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  _buildKeypad(),
-                  _buildContinueButton(),
-                ],
+                    _buildKeypad(),
+                    _buildContinueButton(),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -217,57 +252,68 @@ class _MpinScreenState extends State<MpinScreen>
   // ── Numeric keypad ─────────────────────────────────────────────────────────
 
   Widget _buildKeypad() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.containerMargin,
-      ),
-      child: Column(
-        children: [
-          _buildKeyRow([1, 2, 3]),
-          const SizedBox(height: AppSpacing.sm),
-          _buildKeyRow([4, 5, 6]),
-          const SizedBox(height: AppSpacing.sm),
-          _buildKeyRow([7, 8, 9]),
-          const SizedBox(height: AppSpacing.sm),
-          Row(
-            children: [
-              // Biometric placeholder (non-functional in setup flow)
-              Expanded(
-                child: _KeypadButton(
-                  child: const Icon(
-                    Icons.fingerprint_rounded,
-                    size: 28,
-                    color: AppColors.primary,
+    return BlocBuilder<MpinCubit, MpinState>(
+      builder: (context, state) {
+        // Disable keypad while the RPC is in-flight.
+        final isLoading = state is MpinLoading;
+        return IgnorePointer(
+          ignoring: isLoading,
+          child: Opacity(
+            opacity: isLoading ? 0.4 : 1.0,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.containerMargin,
+              ),
+              child: Column(
+                children: [
+                  _buildKeyRow([1, 2, 3]),
+                  const SizedBox(height: AppSpacing.sm),
+                  _buildKeyRow([4, 5, 6]),
+                  const SizedBox(height: AppSpacing.sm),
+                  _buildKeyRow([7, 8, 9]),
+                  const SizedBox(height: AppSpacing.sm),
+                  Row(
+                    children: [
+                      // Biometric placeholder (non-functional in setup flow)
+                      Expanded(
+                        child: _KeypadButton(
+                          child: const Icon(
+                            Icons.fingerprint_rounded,
+                            size: 28,
+                            color: AppColors.primary,
+                          ),
+                          onTap: () {},
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: _KeypadButton(
+                          label: '0',
+                          onTap: () {
+                            _onDigit(0);
+                            if (_isConfirming) _checkMatch();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: _KeypadButton(
+                          onTap: _onBackspace,
+                          child: const Icon(
+                            Icons.backspace_outlined,
+                            size: 24,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  onTap: () {},
-                ),
+                ],
               ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: _KeypadButton(
-                  label: '0',
-                  onTap: () {
-                    _onDigit(0);
-                    if (_isConfirming) _checkMatch();
-                  },
-                ),
-              ),
-
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: _KeypadButton(
-                  onTap: _onBackspace,
-                  child: const Icon(
-                    Icons.backspace_outlined,
-                    size: 24,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -299,20 +345,39 @@ class _MpinScreenState extends State<MpinScreen>
   // ── Continue button ────────────────────────────────────────────────────────
 
   Widget _buildContinueButton() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.containerMargin,
-        AppSpacing.md,
-        AppSpacing.containerMargin,
-        AppSpacing.md,
-      ),
-      child: AppButton(
-        onPressed: _canContinue ? _onContinue : null,
-        child: Text(
-          'Continue',
-          style: AppTypography.button.copyWith(color: AppColors.onPrimary),
-        ),
-      ),
+    return BlocBuilder<MpinCubit, MpinState>(
+      builder: (context, state) {
+        final isLoading = state is MpinLoading;
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.containerMargin,
+            AppSpacing.md,
+            AppSpacing.containerMargin,
+            AppSpacing.md,
+          ),
+          child: AppButton(
+            onPressed: (!isLoading && _canContinue) ? _onContinue : null,
+            child:
+                isLoading
+                    ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppColors.onPrimary,
+                        ),
+                      ),
+                    )
+                    : Text(
+                      'Continue',
+                      style: AppTypography.button.copyWith(
+                        color: AppColors.onPrimary,
+                      ),
+                    ),
+          ),
+        );
+      },
     );
   }
 }

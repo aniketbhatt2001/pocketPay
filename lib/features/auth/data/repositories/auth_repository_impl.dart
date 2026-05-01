@@ -52,13 +52,28 @@ class AuthRepositoryImpl implements AuthRepository {
     return AuthUser(
       uid: user.id,
       phoneNumber: user.phone ?? verificationId,
-      createdAt:
-          profile != null
-              ? DateTime.tryParse(profile['created_at'] as String? ?? '')
-              : DateTime.tryParse(user.createdAt),
-      fullName: profile?['full_name'] as String?,
-      biometricEnabled: (profile?['biometric_enabled'] as bool?) ?? false,
+      createdAt: DateTime.tryParse(user.createdAt),
+      fullName: profile['full_name'] as String?,
+      biometricEnabled: (profile['biometric_enabled'] as bool?) ?? false,
     );
+  }
+
+  @override
+  Future<void> setMpin({
+    required String userId,
+    required String rawMpin,
+  }) async {
+    final response = await _db.functions.invoke(
+      'set-mpin',
+      body: {'raw_mpin': rawMpin},
+    );
+
+    if (response.status != 200) {
+      final message =
+          (response.data as Map<String, dynamic>?)?['error'] as String? ??
+          'Failed to set MPIN';
+      throw Exception(message);
+    }
   }
 
   @override

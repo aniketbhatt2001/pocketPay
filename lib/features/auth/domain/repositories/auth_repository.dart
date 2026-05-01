@@ -20,6 +20,9 @@ abstract class AuthRepository {
     required String smsCode,
   });
 
+  /// Sets the MPIN for the given user via a secure server-side RPC.
+  Future<void> setMpin({required String userId, required String rawMpin});
+
   /// Signs the current user out.
   Future<void> signOut();
 }
