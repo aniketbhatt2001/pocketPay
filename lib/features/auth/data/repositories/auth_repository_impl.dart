@@ -1,27 +1,14 @@
 import 'dart:developer';
 
 import 'package:pocket_pay_demo/features/auth/data/models/auth_model.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide AuthUser;
 import '../../../../core/services/supabase_auth_service.dart';
 import '../../domain/entities/auth_user.dart';
 import '../../domain/repositories/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
-  AuthRepositoryImpl(this._service) : _db = Supabase.instance.client;
+  AuthRepositoryImpl(this._service);
 
   final SupabaseAuthService _service;
-  final SupabaseClient _db;
-
-  // @override
-  // AuthUser? get currentUser {
-  //   final user = _service.currentUser;
-  //   if (user == null) return null;
-  //   return AuthUser(
-  //     uid: user.id,
-  //     phoneNumber: user.phone ?? '',
-  //     createdAt: DateTime.tryParse(user.createdAt),
-  //   );
-  // }
 
   @override
   Future<String> sendOtp({required String phoneNumber}) {
@@ -35,21 +22,14 @@ class AuthRepositoryImpl implements AuthRepository {
     required String verificationId, // contains the phone number
     required String smsCode,
   }) async {
-    // 1. Verify OTP with Supabase Auth .
+    // 1. Verify OTP with Supabase Auth.
     final user = await _service.verifyOtp(
       phoneNumber: verificationId,
       token: smsCode,
     );
 
-    // 2. Fetch the public profile
-    final profile =
-        await _db
-            .from('users')
-            .select(
-              'id, phone_number, full_name, biometric_enabled, is_mpin_set, created_at',
-            )
-            .eq('id', user.id)
-            .single();
+    // 2. Fetch the public profile via edge function.
+    final profile = await _fetchUserById(user.id);
 
     return AuthUser(
       uid: user.id,
@@ -66,7 +46,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required String userId,
     required String rawMpin,
   }) async {
-    final response = await _db.functions.invoke(
+    final response = await _service.invokeFn(
       'set-mpin',
       body: {'raw_mpin': rawMpin},
     );
@@ -81,26 +61,46 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<AuthUser?> hasActiveSession() async {
-    final hasActiveSession = await _service.hasActiveSession();
-    log("hasActiveSession $hasActiveSession");
-    if (hasActiveSession == false) return null;
+    final active = await _service.hasActiveSession();
+    log('hasActiveSession $active');
+    if (!active) return null;
+
     final id = _service.currentUser?.id;
-    log("id $id");
-    final row =
-        await _db
-            .from('users')
-            .select(
-              'id, phone_number, full_name, biometric_enabled, created_at, is_mpin_set',
-            )
-            .eq('id', id!)
-            .single();
+    log('id $id');
+    if (id == null) return null;
+
+    // Fetch user profile via edge function — no direct DB query here.
+    final row = await _fetchUserById(id);
 
     final authModel = AuthModel.fromJson(row);
-    log("authModel ${authModel.toJson()}}");
-    return authModel
-        .toEntity(); //return AuthUser(uid: user.id, phoneNumber: user.phone!);
+    log('authModel ${authModel.toJson()}');
+    return authModel.toEntity();
   }
 
   @override
   Future<void> signOut() => _service.signOut();
+
+  // ---------------------------------------------------------------------------
+  // Private helpers
+  // ---------------------------------------------------------------------------
+
+  /// Calls the `get-user` edge function and returns the user profile map.
+  ///
+  /// Throws an [Exception] if the function returns a non-200 status.
+  Future<Map<String, dynamic>> _fetchUserById(String id) async {
+    final response = await _service.invokeFn(
+      'get-user',
+      queryParams: {'id': id},
+    );
+
+    if (response.status != 200) {
+      final message =
+          (response.data as Map<String, dynamic>?)?['error'] as String? ??
+          'Failed to fetch user profile';
+      throw Exception(message);
+    }
+
+    return (response.data as Map<String, dynamic>)['data']
+        as Map<String, dynamic>;
+  }
 }

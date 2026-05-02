@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:pocket_pay_demo/features/auth/presentation/bloc/auth_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -28,13 +28,14 @@ class _AddMoneyPageState extends State<AddMoneyPage> {
   void _onAdd() {
     final amount = double.tryParse(_amountController.text.trim());
     if (amount == null || amount <= 0) return;
-
-    final phone = Supabase.instance.client.auth.currentUser?.phone ?? '';
+    final authState = context.read<AuthBloc>().state;
+    if (authState is! AuthAuthenticated) return;
+    //final phone = Supabase.instance.client.auth.currentUser?.phone ?? '';
 
     // razorpayKeyId is already baked into the cubit via AppConfig at creation.
     context.read<AddMoneyCubit>().initiatePayment(
       amount: amount,
-      userPhone: phone,
+      userPhone: authState.user.phoneNumber,
     );
   }
 

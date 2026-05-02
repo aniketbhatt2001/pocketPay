@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase/supabase.dart' show FunctionResponse;
 
 /// Handles phone OTP authentication using Supabase.
 class SupabaseAuthService {
@@ -67,6 +68,22 @@ class SupabaseAuthService {
 
   /// Logs out the current user.
   Future<void> signOut() => _client.auth.signOut();
+
+  /// Invokes a Supabase Edge Function by [name].
+  ///
+  /// [body] is sent as the JSON request body (for POST functions).
+  /// [queryParams] are appended as URL query parameters (for GET functions).
+  Future<FunctionResponse> invokeFn(
+    String name, {
+    Map<String, dynamic>? body,
+    Map<String, dynamic>? queryParams,
+  }) {
+    return _client.functions.invoke(
+      name,
+      body: body,
+      queryParameters: queryParams,
+    );
+  }
 
   String _mapAuthError(AuthException e) {
     final msg = e.message.toLowerCase();

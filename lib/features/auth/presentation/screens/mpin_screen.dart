@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide AuthUser;
+import 'package:pocket_pay_demo/features/auth/presentation/bloc/auth_bloc.dart';
 
 import '../../../../core/theme/theme.dart';
 import '../../../../core/routes/app_routes.dart';
@@ -101,9 +101,13 @@ class _MpinViewState extends State<_MpinView>
 
   void _onContinue() {
     if (!_canContinue) return;
-    final userId = Supabase.instance.client.auth.currentUser?.id;
-    if (userId == null) return;
-    context.read<MpinCubit>().saveMpin(userId: userId, rawMpin: _pin.join());
+    final state = context.read<AuthBloc>().state;
+    if (state is! AuthAuthenticated) return;
+
+    context.read<MpinCubit>().saveMpin(
+      userId: state.user.uid,
+      rawMpin: _pin.join(),
+    );
   }
 
   Future<void> _triggerMismatch() async {

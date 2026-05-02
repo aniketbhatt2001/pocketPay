@@ -2,14 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocket_pay_demo/core/services/supabase_auth_service.dart';
 import 'package:pocket_pay_demo/features/auth/data/repositories/auth_repository_impl.dart';
-
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:pocket_pay_demo/features/auth/domain/usecases/check_session_usecase.dart';
-
 import 'package:pocket_pay_demo/features/auth/domain/usecases/send_otp_usecase.dart';
 import 'package:pocket_pay_demo/features/auth/domain/usecases/verify_otp_usecase.dart';
 import 'package:pocket_pay_demo/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 import 'core/config/app_config.dart';
 import 'core/routes/app_router.dart';
 import 'core/theme/theme.dart';
