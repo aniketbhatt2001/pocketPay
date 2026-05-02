@@ -25,3 +25,8 @@ final class ResendOtpRequested extends AuthEvent {
 final class AuthReset extends AuthEvent {
   const AuthReset();
 }
+
+/// Fired by the splash screen to check session + MPIN status on app start.
+final class AppStarted extends AuthEvent {
+  const AppStarted();
+}

@@ -17,10 +17,8 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 -- Revoke direct invocation — only the trigger should call this.
 REVOKE EXECUTE ON FUNCTION public.handle_new_wallet() FROM PUBLIC, anon, authenticated;
-
 CREATE TRIGGER on_user_created_create_wallet
   AFTER INSERT ON public.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_wallet();

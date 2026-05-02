@@ -47,18 +47,17 @@ class WalletRemoteDatasource {
     }
   }
 
-  /// Adds money to the wallet via a Supabase RPC function.
+  /// Adds money to the wallet by incrementing the balance via RPC.
   Future<void> addMoney({required double amount}) async {
-    final response = await _client.functions.invoke(
-      'add-money',
-      body: {'amount': amount},
-    );
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) throw Exception('User not authenticated.');
+    if (amount <= 0) throw Exception('Amount must be greater than zero.');
 
-    if (response.status != 200) {
-      final message =
-          (response.data as Map<String, dynamic>?)?['error'] as String? ??
-          'Failed to add money.';
-      throw Exception(message);
-    }
+    // Use a Postgres RPC to atomically increment the balance.
+    // The function runs as SECURITY DEFINER so it bypasses RLS for the update.
+    await _client.rpc(
+      'increment_wallet_balance',
+      params: {'p_user_id': userId, 'p_amount': amount},
+    );
   }
 }

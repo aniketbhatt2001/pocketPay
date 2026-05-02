@@ -49,17 +49,18 @@ class _OtpScreenState extends State<OtpScreen> {
     return BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated) {
-          Navigator.of(context).pushNamedAndRemoveUntil(
-            AppRoutes.wallet,
-            (_) => false,
-          );
-        } else if (state is AuthError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: AppColors.error,
-            ),
-          );
+          Navigator.of(
+            context,
+          ).pushNamedAndRemoveUntil(AppRoutes.wallet, (_) => false);
+        } else if (state is AuthUnAuthenticated) {
+          if (state.msg != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.msg!),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          }
           // Stay on OTP screen — user can retry
         } else if (state is OtpSent) {
           // Resend succeeded — restart the countdown
@@ -74,10 +75,12 @@ class _OtpScreenState extends State<OtpScreen> {
           ),
           child: Scaffold(
             backgroundColor: AppColors.background,
-            appBar: _OtpAppBar(onBack: () {
-              context.read<AuthBloc>().add(const AuthReset());
-              Navigator.of(context).pop();
-            }),
+            appBar: _OtpAppBar(
+              onBack: () {
+                context.read<AuthBloc>().add(const AuthReset());
+                Navigator.of(context).pop();
+              },
+            ),
             body: Stack(
               children: [
                 const LoginBackground(),
@@ -96,7 +99,6 @@ class _OtpScreenState extends State<OtpScreen> {
                         const SizedBox(height: AppSpacing.xl),
                         _buildCard(context, isLoading),
                         const SizedBox(height: AppSpacing.md),
-                     
                       ],
                     ),
                   ),
@@ -174,8 +176,11 @@ class _OtpScreenState extends State<OtpScreen> {
             },
           ),
           const SizedBox(height: AppSpacing.md),
-AppButton(onPressed: null,  child: isLoading
-                  ? const SizedBox(
+          AppButton(
+            onPressed: null,
+            child:
+                isLoading
+                    ? const SizedBox(
                       width: 24,
                       height: 24,
                       child: CircularProgressIndicator(
@@ -183,19 +188,17 @@ AppButton(onPressed: null,  child: isLoading
                         color: AppColors.onPrimary,
                       ),
                     )
-                  : Text(
+                    : Text(
                       'Enter all 6 digits to verify',
                       style: AppTypography.button.copyWith(
                         color: AppColors.onPrimary.withOpacity(0.7),
                       ),
-                    ),),
-
-        
+                    ),
+          ),
         ],
       ),
     );
   }
-
 }
 
 // ── App bar ──────────────────────────────────────────────────────────────────

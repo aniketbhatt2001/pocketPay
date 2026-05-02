@@ -18,14 +18,7 @@ class LoginScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final repo = AuthRepositoryImpl(SupabaseAuthService());
-    return BlocProvider(
-      create: (_) => AuthBloc(
-        sendOtpUseCase: SendOtpUseCase(repo),
-        verifyOtpUseCase: VerifyOtpUseCase(repo),
-      ),
-      child: const _LoginView(),
-    );
+    return const _LoginView();
   }
 }
 
@@ -73,19 +66,22 @@ class _LoginViewState extends State<_LoginView> {
           Navigator.of(context).push(
             MaterialPageRoute(
               // Pass the same bloc instance so OTP screen shares state.
-              builder: (_) => BlocProvider.value(
-                value: context.read<AuthBloc>(),
-                child: OtpScreen(phoneNumber: state.phoneNumber),
+              builder:
+                  (_) => BlocProvider.value(
+                    value: context.read<AuthBloc>(),
+                    child: OtpScreen(phoneNumber: state.phoneNumber),
+                  ),
+            ),
+          );
+        } else if (state is AuthUnAuthenticated) {
+          if (state.msg != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.msg!),
+                backgroundColor: AppColors.error,
               ),
-            ),
-          );
-        } else if (state is AuthError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: AppColors.error,
-            ),
-          );
+            );
+          }
           context.read<AuthBloc>().add(const AuthReset());
         }
       },

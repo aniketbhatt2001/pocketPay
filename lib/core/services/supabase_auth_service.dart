@@ -17,8 +17,9 @@ class SupabaseAuthService {
   Future<bool> hasActiveSession() async {
     try {
       final session = _client.auth.currentSession;
-      if (session == null) return false;
-      return !session.isExpired;
+      final user = session?.user;
+      if (user == null) return false;
+      return true;
     } catch (_) {
       return false;
     }

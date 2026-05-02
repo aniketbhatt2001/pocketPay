@@ -1,5 +1,7 @@
-import 'package:supabase_flutter/supabase_flutter.dart' hide AuthUser;
+import 'dart:developer';
 
+import 'package:pocket_pay_demo/features/auth/data/models/auth_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthUser;
 import '../../../../core/services/supabase_auth_service.dart';
 import '../../domain/entities/auth_user.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -10,16 +12,16 @@ class AuthRepositoryImpl implements AuthRepository {
   final SupabaseAuthService _service;
   final SupabaseClient _db;
 
-  @override
-  AuthUser? get currentUser {
-    final user = _service.currentUser;
-    if (user == null) return null;
-    return AuthUser(
-      uid: user.id,
-      phoneNumber: user.phone ?? '',
-      createdAt: DateTime.tryParse(user.createdAt),
-    );
-  }
+  // @override
+  // AuthUser? get currentUser {
+  //   final user = _service.currentUser;
+  //   if (user == null) return null;
+  //   return AuthUser(
+  //     uid: user.id,
+  //     phoneNumber: user.phone ?? '',
+  //     createdAt: DateTime.tryParse(user.createdAt),
+  //   );
+  // }
 
   @override
   Future<String> sendOtp({required String phoneNumber}) {
@@ -44,7 +46,7 @@ class AuthRepositoryImpl implements AuthRepository {
         await _db
             .from('users')
             .select(
-              'id, phone_number, full_name, biometric_enabled, created_at',
+              'id, phone_number, full_name, biometric_enabled, is_mpin_set, created_at',
             )
             .eq('id', user.id)
             .single();
@@ -55,6 +57,7 @@ class AuthRepositoryImpl implements AuthRepository {
       createdAt: DateTime.tryParse(user.createdAt),
       fullName: profile['full_name'] as String?,
       biometricEnabled: (profile['biometric_enabled'] as bool?) ?? false,
+      isMpinSet: (profile['is_mpin_set'] as bool?) ?? false,
     );
   }
 
@@ -74,6 +77,28 @@ class AuthRepositoryImpl implements AuthRepository {
           'Failed to set MPIN';
       throw Exception(message);
     }
+  }
+
+  @override
+  Future<AuthUser?> hasActiveSession() async {
+    final hasActiveSession = await _service.hasActiveSession();
+    log("hasActiveSession $hasActiveSession");
+    if (hasActiveSession == false) return null;
+    final id = _service.currentUser?.id;
+    log("id $id");
+    final row =
+        await _db
+            .from('users')
+            .select(
+              'id, phone_number, full_name, biometric_enabled, created_at, is_mpin_set',
+            )
+            .eq('id', id!)
+            .single();
+
+    final authModel = AuthModel.fromJson(row);
+    log("authModel ${authModel.toJson()}}");
+    return authModel
+        .toEntity(); //return AuthUser(uid: user.id, phoneNumber: user.phone!);
   }
 
   @override

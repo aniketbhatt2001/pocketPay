@@ -42,7 +42,4 @@ class HomeCubit extends Cubit<HomeState> {
       emit(HomeError(e.toString().replaceFirst('Exception: ', '')));
     }
   }
-
-  /// Refreshes data (e.g. after a send/add money action).
-  Future<void> refresh() => loadHome();
 }

@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../cubit/splash_cubit.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -38,7 +38,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     // Trigger session check after the splash animation completes.
     Future.delayed(const Duration(milliseconds: 2200), () {
-      if (mounted) context.read<SplashCubit>().checkSession();
+      if (mounted) context.read<AuthBloc>().add(const AppStarted());
     });
   }
 
@@ -50,16 +50,18 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<SplashCubit, SplashState>(
+    return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         switch (state) {
-          case SplashAuthenticated():
-            Navigator.of(context).pushReplacementNamed(AppRoutes.wallet);
-          case SplashMpinRequired():
-            Navigator.of(context).pushReplacementNamed(AppRoutes.mpin);
-          case SplashUnauthenticated():
+          case AuthAuthenticated():
+            state.user.isMpinSet
+                ? Navigator.of(context).pushReplacementNamed(AppRoutes.wallet)
+                : Navigator.of(context).pushReplacementNamed(AppRoutes.mpin);
+          // case AppStartMpinRequired():
+          //   Navigator.of(context).pushReplacementNamed(AppRoutes.mpin);
+          case AuthUnAuthenticated():
             Navigator.of(context).pushReplacementNamed(AppRoutes.login);
-          case SplashInitial():
+          default:
             break;
         }
       },

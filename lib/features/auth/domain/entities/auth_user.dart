@@ -9,6 +9,7 @@ class AuthUser {
     this.createdAt,
     this.fullName,
     this.biometricEnabled = false,
+    this.isMpinSet = false,
   });
 
   final String uid;
@@ -16,7 +17,9 @@ class AuthUser {
   final String? fullName;
   final bool biometricEnabled;
   final DateTime? createdAt;
+  final bool isMpinSet;
 
   @override
-  String toString() => 'AuthUser(uid: $uid, phone: $phoneNumber, createdAt: $createdAt)';
+  String toString() =>
+      'AuthUser(uid: $uid, phone: $phoneNumber, createdAt: $createdAt , isMpinSet: $isMpinSet)';
 }

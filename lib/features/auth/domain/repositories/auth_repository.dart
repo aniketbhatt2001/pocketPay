@@ -3,7 +3,7 @@ import '../entities/auth_user.dart';
 /// Contract for authentication operations.
 abstract class AuthRepository {
   /// The currently signed-in user, or null if not authenticated.
-  AuthUser? get currentUser;
+  // AuthUser? get currentUser;
 
   /// Initiates phone-number verification and sends an SMS OTP.
   ///
@@ -22,6 +22,12 @@ abstract class AuthRepository {
 
   /// Sets the MPIN for the given user via a secure server-side RPC.
   Future<void> setMpin({required String userId, required String rawMpin});
+
+  /// Returns whether the user already has an active session.
+  Future<AuthUser?> hasActiveSession();
+
+  /// Returns whether the authenticated user has already configured an MPIN.
+  // Future<bool> isMpinSet();
 
   /// Signs the current user out.
   Future<void> signOut();

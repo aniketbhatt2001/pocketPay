@@ -3,11 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocket_pay_demo/features/transactions/domain/usecases/get_recent_transactions.dart';
 import 'package:pocket_pay_demo/features/wallet/domain/usecases/get_wallet_balance.dart';
-
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../add_money/presentation/widgets/add_money_bottom_sheet.dart';
 import '../cubit/home_cubit.dart';
 import '../widgets/action_buttons.dart';
 import '../widgets/recent_transactions.dart';
@@ -41,7 +41,7 @@ class HomePage extends StatelessWidget {
             top: false,
             child: RefreshIndicator(
               color: AppColors.primary,
-              onRefresh: () => context.read<HomeCubit>().refresh(),
+              onRefresh: () => context.read<HomeCubit>().loadHome(),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.symmetric(
@@ -65,8 +65,12 @@ class HomePage extends StatelessWidget {
 
                         // ── Action Buttons ───────────────────────────────────
                         ActionButtons(
-                          onAddMoney: () {
-                            // TODO: navigate to add money page
+                          onAddMoney: () async {
+                            final cubit = context.read<HomeCubit>();
+                            final success = await showAddMoneyBottomSheet(
+                              context,
+                            );
+                            if (success) cubit.loadHome();
                           },
                           onSendMoney: () {
                             // TODO: navigate to send money page
