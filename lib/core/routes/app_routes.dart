@@ -15,4 +15,6 @@ class AppRoutes {
   static const String transaction = '/transaction';
   static const String qrScanner = '/qr-scanner';
   static const String profile = '/profile';
+  static const String sendMoney = '/sendMoney';
+  static const String enterMpin = '/enterMpin';
 }

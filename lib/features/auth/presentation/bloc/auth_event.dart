@@ -12,8 +12,9 @@ final class SendOtpRequested extends AuthEvent {
 
 /// User submitted the 6-digit OTP.
 final class VerifyOtpRequested extends AuthEvent {
-  const VerifyOtpRequested(this.smsCode);
+  const VerifyOtpRequested(this.smsCode, this.phoneNumber);
   final String smsCode;
+  final String phoneNumber;
 }
 
 /// User tapped "Resend" on the OTP screen.

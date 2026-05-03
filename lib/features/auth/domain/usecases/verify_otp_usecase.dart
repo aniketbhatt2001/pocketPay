@@ -1,3 +1,5 @@
+import 'package:pocket_pay_demo/core/result/result.dart';
+
 import '../entities/auth_user.dart';
 import '../repositories/auth_repository.dart';
 
@@ -6,13 +8,10 @@ class VerifyOtpUseCase {
 
   final AuthRepository _repository;
 
-  Future<AuthUser> call({
-    required String verificationId,
+  Future<Result<AuthUser>> call({
+    required String phoneNumber,
     required String smsCode,
   }) {
-    return _repository.verifyOtp(
-      verificationId: verificationId,
-      smsCode: smsCode,
-    );
+    return _repository.verifyOtp(phoneNumber: phoneNumber, smsCode: smsCode);
   }
 }

@@ -13,8 +13,6 @@ import '../../../../features/wallet/data/repositories/wallet_repository_impl.dar
 import '../../../../features/wallet/domain/usecases/add_money.dart';
 import '../cubit/add_money_cubit.dart';
 
-/// Shows the "Add Money" bottom sheet.
-/// Returns `true` when the wallet was successfully topped up.
 Future<bool> showAddMoneyBottomSheet(BuildContext context) async {
   final result = await showModalBottomSheet<bool>(
     context: context,
@@ -28,7 +26,7 @@ Future<bool> showAddMoneyBottomSheet(BuildContext context) async {
               addMoney: AddMoneyUseCase(walletRepo),
               razorpayKeyId: AppConfig.razorpayKeyId,
             ),
-        child: const _AddMoneySheet(),
+        child: const AddMoneySheet(),
       );
     },
   );
@@ -37,14 +35,14 @@ Future<bool> showAddMoneyBottomSheet(BuildContext context) async {
 
 // ── Sheet ──────────────────────────────────────────────────────────────────
 
-class _AddMoneySheet extends StatefulWidget {
-  const _AddMoneySheet();
+class AddMoneySheet extends StatefulWidget {
+  const AddMoneySheet({super.key});
 
   @override
-  State<_AddMoneySheet> createState() => _AddMoneySheetState();
+  State<AddMoneySheet> createState() => AddMoneySheetState();
 }
 
-class _AddMoneySheetState extends State<_AddMoneySheet> {
+class AddMoneySheetState extends State<AddMoneySheet> {
   final _amountController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 

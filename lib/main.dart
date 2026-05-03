@@ -34,7 +34,7 @@ class MainApp extends StatelessWidget {
       providers: [
         BlocProvider(
           create: (_) {
-            final repo = AuthRepositoryImpl(SupabaseAuthService());
+            final repo = AuthRepositoryImpl(SupabaseService());
             return AuthBloc(
               sendOtpUseCase: SendOtpUseCase(repo),
               verifyOtpUseCase: VerifyOtpUseCase(repo),

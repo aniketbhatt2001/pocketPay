@@ -1,9 +1,11 @@
+import 'dart:developer';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:supabase/supabase.dart' show FunctionResponse;
 
 /// Handles phone OTP authentication using Supabase.
-class SupabaseAuthService {
-  SupabaseAuthService({SupabaseClient? client})
+class SupabaseService {
+  SupabaseService({SupabaseClient? client})
     : _client = client ?? Supabase.instance.client;
 
   final SupabaseClient _client;
@@ -78,6 +80,7 @@ class SupabaseAuthService {
     Map<String, dynamic>? body,
     Map<String, dynamic>? queryParams,
   }) {
+    log("body $body , name $name queryParameters $queryParams");
     return _client.functions.invoke(
       name,
       body: body,

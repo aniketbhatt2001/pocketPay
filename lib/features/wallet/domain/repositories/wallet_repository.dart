@@ -1,3 +1,6 @@
+import 'package:pocket_pay_demo/core/result/result.dart';
+import 'package:pocket_pay_demo/features/wallet/domain/entities/transfer_reponse.dart';
+
 import '../entities/wallet.dart';
 
 /// Contract for wallet data operations.
@@ -6,8 +9,9 @@ abstract class WalletRepository {
   Future<Wallet> getWalletBalance();
 
   /// Sends money to a recipient.
-  Future<void> sendMoney({
+  Future<Result<TransferReponse>> sendMoney({
     required String recipientPhone,
+    required String senderUserId,
     required double amount,
     String? note,
   });

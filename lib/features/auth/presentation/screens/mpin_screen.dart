@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pocket_pay_demo/features/auth/domain/usecases/verify_mpin_usecase.dart';
 import 'package:pocket_pay_demo/features/auth/presentation/bloc/auth_bloc.dart';
 
 import '../../../../core/theme/theme.dart';
@@ -18,9 +19,13 @@ class MpinScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final repo = AuthRepositoryImpl(SupabaseAuthService());
+    final repo = AuthRepositoryImpl(SupabaseService());
     return BlocProvider(
-      create: (_) => MpinCubit(setMpinUseCase: SetMpinUseCase(repo)),
+      create:
+          (_) => MpinCubit(
+            setMpinUseCase: SetMpinUseCase(repo),
+            verifyMpinUseCase: VerifyMpinUseCase(repo),
+          ),
       child: const _MpinView(),
     );
   }
@@ -152,42 +157,37 @@ class _MpinViewState extends State<_MpinView>
           );
         }
       },
-      child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle.dark.copyWith(
-          statusBarColor: Colors.transparent,
-        ),
-        child: Scaffold(
-          backgroundColor: AppColors.background,
-          appBar: _MpinAppBar(onBack: () => Navigator.of(context).maybePop()),
-          body: Stack(
-            children: [
-              const LoginBackground(),
-              SafeArea(
-                top: false,
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.containerMargin,
-                        ),
-                        child: Column(
-                          children: [
-                            const SizedBox(height: AppSpacing.lg),
-                            _buildHero(),
-                            const SizedBox(height: AppSpacing.lg),
-                            _buildPinRows(),
-                          ],
-                        ),
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: _MpinAppBar(onBack: () => Navigator.of(context).maybePop()),
+        body: Stack(
+          children: [
+            const LoginBackground(),
+            SafeArea(
+              top: false,
+              child: Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.containerMargin,
+                      ),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: AppSpacing.lg),
+                          _buildHero(),
+                          const SizedBox(height: AppSpacing.lg),
+                          _buildPinRows(),
+                        ],
                       ),
                     ),
-                    _buildKeypad(),
-                    _buildContinueButton(),
-                  ],
-                ),
+                  ),
+                  _buildKeypad(),
+                  _buildContinueButton(),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

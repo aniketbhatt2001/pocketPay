@@ -47,7 +47,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   //   on<AuthReset>(_onReset);
 
   /// Stored between SendOtp and VerifyOtp events.
-  String? _verificationId;
+  // String? _verificationId;
   String? _lastPhoneNumber;
 
   // ── Handlers ───────────────────────────────────────────────────────────────
@@ -56,13 +56,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       log("_onAppStarted");
       emit(const AuthLoading());
-      final user = await _checkSession();
-      if (user == null) {
-        emit(const AuthUnAuthenticated());
-        return;
-      }
-      log("AuthAuthenticated ${user?.toString()}");
-      emit(AuthAuthenticated(user));
+      final result = await _checkSession();
+      result.fold(
+        onSuccess: (value) {
+          emit(AuthAuthenticated(value));
+        },
+        onFailure: (failure) {
+          emit(AuthUnAuthenticated(msg: failure.message));
+        },
+      );
     } catch (e) {
       emit(AuthUnAuthenticated(msg: e.toString()));
     }
@@ -75,9 +77,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       emit(const AuthLoading());
       _lastPhoneNumber = event.phoneNumber;
-      final verificationId = await _sendOtp(phoneNumber: event.phoneNumber);
-      _verificationId = verificationId;
-      emit(OtpSent(event.phoneNumber));
+      final result = await _sendOtp(phoneNumber: event.phoneNumber);
+      result.fold(
+        onSuccess: (value) {
+          emit(OtpSent(value));
+        },
+        onFailure: (failure) {
+          emit(AuthUnAuthenticated(msg: failure.message));
+        },
+      );
     } catch (e) {
       log(e.toString());
       emit(
@@ -91,20 +99,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     try {
-      if (_verificationId == null) {
-        emit(
-          AuthUnAuthenticated(
-            msg: 'Session expired. Please request a new code.',
-          ),
-        );
-        return;
-      }
       emit(const AuthLoading());
-      final user = await _verifyOtp(
-        verificationId: _verificationId!,
+      final result = await _verifyOtp(
+        phoneNumber: event.phoneNumber,
         smsCode: event.smsCode,
       );
-      emit(AuthAuthenticated(user));
+      result.fold(
+        onSuccess: (value) {
+          emit(AuthAuthenticated(value));
+        },
+        onFailure: (failure) {
+          emit(AuthUnAuthenticated(msg: failure.message));
+        },
+      );
     } catch (e) {
       log(e.toString());
       emit(
@@ -120,9 +127,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       if (_lastPhoneNumber == null) return;
       emit(const AuthLoading());
-      final verificationId = await _sendOtp(phoneNumber: _lastPhoneNumber!);
-      _verificationId = verificationId;
-      emit(OtpSent(_lastPhoneNumber!));
+      final result = await _sendOtp(phoneNumber: _lastPhoneNumber!);
+      result.fold(
+        onSuccess: (value) {
+          emit(OtpSent(_lastPhoneNumber!));
+        },
+        onFailure: (failure) {
+          emit(AuthUnAuthenticated(msg: failure.message));
+        },
+      );
     } catch (e) {
       log(e.toString());
       emit(
@@ -132,7 +145,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   void _onReset(AuthReset event, Emitter<AuthState> emit) {
-    _verificationId = null;
     _lastPhoneNumber = null;
     emit(const AuthInitial());
   }

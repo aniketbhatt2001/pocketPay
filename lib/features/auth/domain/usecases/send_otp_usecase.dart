@@ -1,3 +1,5 @@
+import 'package:pocket_pay_demo/core/result/result.dart';
+
 import '../repositories/auth_repository.dart';
 
 class SendOtpUseCase {
@@ -6,7 +8,7 @@ class SendOtpUseCase {
   final AuthRepository _repository;
 
   /// Returns the verificationId on success, throws on failure.
-  Future<String> call({required String phoneNumber}) {
+  Future<Result<String>> call({required String phoneNumber}) {
     return _repository.sendOtp(phoneNumber: phoneNumber);
   }
 }

@@ -1,3 +1,7 @@
+import 'dart:developer';
+
+import 'package:pocket_pay_demo/core/error/exceptions.dart';
+import 'package:pocket_pay_demo/features/wallet/data/models/transfer_response_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/wallet_model.dart';
@@ -25,26 +29,57 @@ class WalletRemoteDatasource {
   }
 
   /// Sends money to a recipient via a Supabase RPC function.
-  Future<void> sendMoney({
+  Future<TransferResponseModel> sendMoney({
     required String recipientPhone,
     required double amount,
+    required String senderUserId, // ✅ fixed type
     String? note,
   }) async {
-    final response = await _client.functions.invoke(
-      'send-money',
-      body: {
-        'recipient_phone': recipientPhone,
-        'amount': amount,
-        if (note != null) 'note': note,
-      },
-    );
+    try {
+      if (recipientPhone.isEmpty) {
+        throw InvalidResponseException('Recipient phone is required');
+      }
 
-    if (response.status != 200) {
-      final message =
-          (response.data as Map<String, dynamic>?)?['error'] as String? ??
-          'Failed to send money.';
-      throw Exception(message);
-    }
+      if (amount <= 0) {
+        throw InvalidResponseException('Amount must be greater than zero');
+      }
+      print({
+        'recipient_phone_number': recipientPhone,
+        'amount': amount,
+        'sender_user_id': senderUserId,
+        if (note != null && note.isNotEmpty) 'note': note,
+      });
+      final response = await _client.functions.invoke(
+        'transfer-money',
+        body: {
+          'recipient_phone_number': recipientPhone,
+          'amount': amount,
+          'sender_user_id': senderUserId,
+          if (note != null && note.isNotEmpty) 'note': note,
+        },
+      );
+      log("response ${response.data}");
+      if (response.status != 200) {
+        final message =
+            (response.data as Map<String, dynamic>?)?['error'] as String? ??
+            'Failed to send money';
+
+        throw ServerException(message);
+      }
+
+      final data = response.data;
+
+      if (data != null && data is! Map<String, dynamic>) {
+        throw InvalidResponseException('Invalid response format');
+      }
+      log("data $data");
+      return TransferResponseModel.fromJson(data);
+    } on FunctionException catch (e) {
+      throw ServerException(e.details["error"]);
+    } catch (e) {
+      print(e);
+      throw ServerException("Something went wrong");
+    } // ✅ No return → success = no exception
   }
 
   /// Adds money to the wallet by incrementing the balance via RPC.

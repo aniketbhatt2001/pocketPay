@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocket_pay_demo/features/send_money/presentation/pages/send_money_page.dart';
 
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/mpin_screen.dart';
@@ -35,6 +36,7 @@ class AppRouter {
     AppRoutes.payment: (_) => const PaymentScreen(),
     AppRoutes.qrScanner: (_) => const QrScannerScreen(),
     AppRoutes.profile: (_) => const ProfileScreen(),
+    // AppRoutes.sendMoney: (_) => const SendMoneyPage(),
   };
 
   /// Fallback for unknown routes

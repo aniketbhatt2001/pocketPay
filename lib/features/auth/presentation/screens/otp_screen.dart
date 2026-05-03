@@ -171,7 +171,9 @@ class _OtpScreenState extends State<OtpScreen> {
             enabled: !isLoading,
             onCompleted: (otp) {
               if (!isLoading) {
-                context.read<AuthBloc>().add(VerifyOtpRequested(otp));
+                context.read<AuthBloc>().add(
+                  VerifyOtpRequested(otp, widget.phoneNumber),
+                );
               }
             },
           ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pocket_pay_demo/core/routes/app_routes.dart';
+import 'package:pocket_pay_demo/features/send_money/presentation/pages/send_money_page.dart';
 import 'package:pocket_pay_demo/features/transactions/domain/usecases/get_recent_transactions.dart';
 import 'package:pocket_pay_demo/features/wallet/domain/usecases/get_wallet_balance.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -30,74 +32,86 @@ class HomePage extends StatelessWidget {
             getWalletBalance: getWalletBalance,
             getRecentTransactions: getRecentTransactions,
           )..loadHome(),
-      child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle.dark.copyWith(
-          statusBarColor: Colors.transparent,
-        ),
-        child: Scaffold(
-          backgroundColor: AppColors.surfaceContainerLow,
-          appBar: const _HomeAppBar(),
-          body: SafeArea(
-            top: false,
-            child: RefreshIndicator(
-              color: AppColors.primary,
-              onRefresh: () => context.read<HomeCubit>().loadHome(),
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.containerMargin,
-                  vertical: AppSpacing.md,
-                ),
-                child: BlocBuilder<HomeCubit, HomeState>(
-                  builder: (context, state) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // ── Wallet Card ──────────────────────────────────────
-                        if (state is HomeWalletLoading || state is HomeInitial)
-                          const WalletCardSkeleton()
-                        else if (state is HomeLoaded)
-                          WalletCard(wallet: state.wallet)
-                        else if (state is HomeError)
-                          _WalletErrorCard(message: state.message),
+      child: Scaffold(
+        backgroundColor: AppColors.surfaceContainerLow,
+        appBar: const _HomeAppBar(),
+        body: Builder(
+          builder: (context) {
+            return SafeArea(
+              top: false,
+              child: RefreshIndicator(
+                color: AppColors.primary,
+                onRefresh: () => context.read<HomeCubit>().loadHome(),
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.containerMargin,
+                    vertical: AppSpacing.md,
+                  ),
+                  child: BlocBuilder<HomeCubit, HomeState>(
+                    builder: (context, state) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // ── Wallet Card ──────────────────────────────────────
+                          if (state is HomeWalletLoading ||
+                              state is HomeInitial)
+                            const WalletCardSkeleton()
+                          else if (state is HomeLoaded)
+                            WalletCard(wallet: state.wallet)
+                          else if (state is HomeError)
+                            _WalletErrorCard(message: state.message),
 
-                        const SizedBox(height: AppSpacing.gutter),
+                          const SizedBox(height: AppSpacing.gutter),
 
-                        // ── Action Buttons ───────────────────────────────────
-                        ActionButtons(
-                          onAddMoney: () async {
-                            final cubit = context.read<HomeCubit>();
-                            final success = await showAddMoneyBottomSheet(
-                              context,
-                            );
-                            if (success) cubit.loadHome();
-                          },
-                          onSendMoney: () {
-                            // TODO: navigate to send money page
-                          },
-                        ),
-
-                        const SizedBox(height: AppSpacing.md),
-
-                        // ── Recent Transactions ──────────────────────────────
-                        if (state is HomeWalletLoading || state is HomeInitial)
-                          const _RecentTransactionsSkeleton()
-                        else if (state is HomeLoaded)
-                          RecentTransactions(
-                            transactions: state.recentTransactions,
-                            onViewAll: () {
-                              // TODO: navigate to transactions page
+                          // ── Action Buttons ───────────────────────────────────
+                          Builder(
+                            builder: (ctx) {
+                              return ActionButtons(
+                                onAddMoney: () async {
+                                  final success = await showAddMoneyBottomSheet(
+                                    context,
+                                  );
+                                  if (success) ctx.read<HomeCubit>().loadHome();
+                                },
+                                onSendMoney: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder:
+                                          (_) => SendMoneyPage(() {
+                                            ctx.read<HomeCubit>().loadHome();
+                                          }),
+                                    ),
+                                  );
+                                  print("onSendMoney");
+                                },
+                              );
                             },
-                          )
-                        else if (state is HomeError)
-                          const SizedBox.shrink(),
-                      ],
-                    );
-                  },
+                          ),
+
+                          const SizedBox(height: AppSpacing.md),
+
+                          // ── Recent Transactions ──────────────────────────────
+                          if (state is HomeWalletLoading ||
+                              state is HomeInitial)
+                            const _RecentTransactionsSkeleton()
+                          else if (state is HomeLoaded)
+                            RecentTransactions(
+                              transactions: state.recentTransactions,
+                              onViewAll: () {
+                                // TODO: navigate to transactions page
+                              },
+                            )
+                          else if (state is HomeError)
+                            const SizedBox.shrink(),
+                        ],
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
