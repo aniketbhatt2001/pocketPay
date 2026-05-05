@@ -26,7 +26,7 @@ class TransactionRemoteDataSource {
           .toList();
     } catch (e, st) {
       print(st);
-      throw ServerException(e.toString());
+      throw mapFunctionExceptionToCustom(e);
     }
   }
 }

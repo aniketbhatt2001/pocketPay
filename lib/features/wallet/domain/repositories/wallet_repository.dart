@@ -6,7 +6,7 @@ import '../entities/wallet.dart';
 /// Contract for wallet data operations.
 abstract class WalletRepository {
   /// Fetches the wallet for the currently authenticated user.
-  Future<Wallet> getWalletBalance();
+  Future<Result<Wallet>> getWalletBalance();
 
   /// Sends money to a recipient.
   Future<Result<TransferReponse>> sendMoney({
@@ -17,5 +17,5 @@ abstract class WalletRepository {
   });
 
   /// Adds money to the wallet.
-  Future<void> addMoney({required double amount});
+  Future<Result<void>> addMoney({required double amount});
 }

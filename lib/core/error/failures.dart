@@ -17,6 +17,10 @@ class InvalidDataFailure extends Failure {
   const InvalidDataFailure(super.message);
 }
 
+class InvalidRequestFailure extends Failure {
+  const InvalidRequestFailure(super.message);
+}
+
 class UnauthorizedFailure extends Failure {
   const UnauthorizedFailure(super.message);
 }

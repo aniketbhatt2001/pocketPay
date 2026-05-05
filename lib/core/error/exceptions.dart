@@ -1,4 +1,6 @@
 // Network / API level
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 class ServerException implements Exception {
   final String message;
   ServerException(this.message);
@@ -50,4 +52,28 @@ class UnauthorizedException implements Exception {
     // TODO: implement toString
     return message;
   }
+}
+
+Exception mapFunctionExceptionToCustom(Object error) {
+  if (error is! FunctionException) {
+    return ServerException('Unexpected error');
+  }
+
+  final data = error.details;
+
+  // Supabase usually returns: { error: "message" }
+  final message =
+      (data is Map<String, dynamic> ? data['error'] : null) as String? ??
+      'Something went wrong';
+
+  // You can extend this logic based on backend error codes
+  if (message.toLowerCase().contains('unauthorized')) {
+    return UnauthorizedException(message);
+  }
+
+  if (message.toLowerCase().contains('network')) {
+    return NetworkException(message);
+  }
+
+  return ServerException(message);
 }

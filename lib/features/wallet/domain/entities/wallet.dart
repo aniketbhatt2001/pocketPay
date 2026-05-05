@@ -1,10 +1,10 @@
 /// Domain entity representing a user's wallet.
 class Wallet {
   const Wallet({
-    required this.id,
-    required this.userId,
-    required this.balance,
-    required this.currency,
+    this.id = '',
+    this.userId = '',
+    this.balance = 0,
+    this.currency = '',
     this.updatedAt,
   });
 

@@ -68,9 +68,10 @@ class AddMoneyCubit extends Cubit<AddMoneyState> {
   }
 
   void _onPaymentError(PaymentFailureResponse response) {
-    log('[AddMoneyCubit] payment error: ${response.message}');
     if (response.code == Razorpay.PAYMENT_CANCELLED) {
-      emit(const AddMoneyIdle());
+      AddMoneyFailure(
+        response.message ?? 'Payment processing cancelled by user',
+      );
     } else {
       emit(
         AddMoneyFailure(

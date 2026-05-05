@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocket_pay_demo/core/result/result.dart';
 import 'package:pocket_pay_demo/features/transactions/domain/usecases/get_all_transactions.dart';
@@ -23,7 +21,6 @@ class HomeCubit extends Cubit<HomeState> {
   final GetWalletBalanceUseCase _getWalletBalance;
   final GetAllTransactions _getAllTransactions;
 
-  /// Loads wallet balance and recent transactions in parallel.
   Future<void> loadHome() async {
     try {
       emit(const HomeWalletLoading());
@@ -32,30 +29,34 @@ class HomeCubit extends Cubit<HomeState> {
         _getWalletBalance(),
         _getAllTransactions(),
       ]);
-      final res = results[1] as Result<List<Transaction>>;
-      res.fold(
-        onSuccess: (value) {
-          emit(
-            HomeLoaded(
-              wallet: results[0] as Wallet,
-              recentTransactions: value,
-              //    recentTransactions: results[1] as List<Transaction>,
-            ),
-          );
-        },
-        onFailure: (failure) {
-          emit(HomeError(failure.message));
-        },
+
+      final walletResult = results[0] as Result<Wallet>;
+      final txResult = results[1] as Result<List<Transaction>>;
+
+      Wallet? wallet;
+      List<Transaction>? transactions;
+      String? walletError;
+      String? txError;
+
+      walletResult.fold(
+        onSuccess: (w) => wallet = w,
+        onFailure: (f) => walletError = f.message,
       );
-      // emit(
-      //   HomeLoaded(
-      //     wallet: results[0] as Wallet,
-      //     recentTransactions: .,
-      //     //    recentTransactions: results[1] as List<Transaction>,
-      //   ),
-      // );
+
+      txResult.fold(
+        onSuccess: (t) => transactions = t,
+        onFailure: (f) => txError = f.message,
+      );
+
+      emit(
+        HomeLoaded(
+          wallet: wallet ?? Wallet(),
+          recentTransactions: transactions ?? [],
+          walletError: walletError,
+          transactionError: txError,
+        ),
+      );
     } catch (e) {
-      log(e.toString());
       emit(HomeError(e.toString()));
     }
   }

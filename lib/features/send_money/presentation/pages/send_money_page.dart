@@ -85,7 +85,10 @@ class _SendMoneyPageState extends State<SendMoneyPage> {
               final navigator = Navigator.of(context);
               navigator.pop();
               messenger.showSnackBar(
-                const SnackBar(content: Text('Money sent successfully!')),
+                SnackBar(
+                  content: Text("Money Sent succesfully"),
+                  backgroundColor: AppColors.secondary,
+                ),
               );
             } else if (state is SendMoneyError) {
               ScaffoldMessenger.of(context).showSnackBar(

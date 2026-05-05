@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocket_pay_demo/core/routes/app_routes.dart';
 import 'package:pocket_pay_demo/features/send_money/presentation/pages/send_money_page.dart';
 import 'package:pocket_pay_demo/features/transactions/domain/usecases/get_all_transactions.dart';
+import 'package:pocket_pay_demo/features/wallet/domain/entities/wallet.dart';
 
 import 'package:pocket_pay_demo/features/wallet/domain/usecases/get_wallet_balance.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -54,7 +55,7 @@ class HomePage extends StatelessWidget {
                               state is HomeInitial)
                             const WalletCardSkeleton()
                           else if (state is HomeLoaded)
-                            WalletCard(wallet: state.wallet)
+                            WalletCard(wallet: (state.wallet))
                           else if (state is HomeError)
                             _WalletErrorCard(message: state.message),
 
@@ -93,7 +94,7 @@ class HomePage extends StatelessWidget {
                             const _AllTransactionsSkeleton()
                           else if (state is HomeLoaded)
                             AllTransactions(
-                              transactions: state.recentTransactions,
+                              transactions: state.recentTransactions ?? [],
                               onViewAll: () {
                                 // TODO: navigate to transactions page
                               },

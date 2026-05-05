@@ -81,6 +81,7 @@ class AddMoneySheetState extends State<AddMoneySheet> {
         if (state is AddMoneySuccess) {
           Navigator.of(context).pop(true);
         } else if (state is AddMoneyFailure) {
+          Navigator.of(context).pop();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),

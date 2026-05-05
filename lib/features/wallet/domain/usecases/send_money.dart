@@ -1,3 +1,4 @@
+import 'package:pocket_pay_demo/core/error/failures.dart';
 import 'package:pocket_pay_demo/core/result/result.dart';
 import 'package:pocket_pay_demo/features/wallet/domain/entities/transfer_reponse.dart';
 
@@ -14,10 +15,21 @@ class SendMoneyUseCase {
     required double amount,
     required String senderUserId,
     String? note,
-  }) => _repository.sendMoney(
-    recipientPhone: recipientPhone,
-    senderUserId: senderUserId,
-    amount: amount,
-    note: note,
-  );
+  }) async {
+    if (recipientPhone.isEmpty) {
+      return Result.failure(InvalidDataFailure('Recipient phone is required'));
+    }
+    if (amount <= 0) {
+      return Result.failure(
+        InvalidDataFailure('Amount must be greater than zero'),
+      );
+    }
+
+    return _repository.sendMoney(
+      recipientPhone: recipientPhone,
+      senderUserId: senderUserId,
+      amount: amount,
+      note: note,
+    );
+  }
 }

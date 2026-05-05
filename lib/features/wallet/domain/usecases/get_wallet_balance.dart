@@ -1,3 +1,5 @@
+import 'package:pocket_pay_demo/core/result/result.dart';
+
 import '../entities/wallet.dart';
 import '../repositories/wallet_repository.dart';
 
@@ -7,5 +9,5 @@ class GetWalletBalanceUseCase {
 
   final WalletRepository _repository;
 
-  Future<Wallet> call() => _repository.getWalletBalance();
+  Future<Result<Wallet>> call() => _repository.getWalletBalance();
 }

@@ -1,31 +1,40 @@
 import 'dart:developer';
 
 import 'package:pocket_pay_demo/core/error/exceptions.dart';
+import 'package:pocket_pay_demo/core/services/supabase_auth_service.dart';
 import 'package:pocket_pay_demo/features/wallet/data/models/transfer_response_model.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show FunctionException;
 
 import '../models/wallet_model.dart';
 
 /// Remote data source for wallet operations via Supabase.
 class WalletRemoteDatasource {
-  WalletRemoteDatasource({SupabaseClient? client})
-    : _client = client ?? Supabase.instance.client;
+  WalletRemoteDatasource({SupabaseService? client})
+    : _client = client ?? SupabaseService();
 
-  final SupabaseClient _client;
+  final SupabaseService _client;
 
-  /// Fetches the wallet row for the currently authenticated user.
+  /// Fetches the wallet balance for the currently authenticated user via edge function.
   Future<WalletModel> getWalletBalance() async {
-    final userId = _client.auth.currentUser?.id;
-    if (userId == null) throw UnauthorizedException('User not authenticated.');
+    try {
+      final userId = _client.currentUser?.id;
+      if (userId == null) {
+        throw UnauthorizedException('User not authenticated.');
+      }
 
-    final data =
-        await _client
-            .from('wallets')
-            .select('id, user_id, balance, currency, updated_at')
-            .eq('user_id', userId)
-            .single();
-    print(data);
-    return WalletModel.fromJson(data);
+      final response = await _client.invokeFn(
+        'get-wallet-balance',
+        body: {'user_id': userId},
+      );
+
+      log('getWalletBalance response: ${response.data}');
+      return WalletModel.fromJson(response.data);
+    } on FunctionException catch (e) {
+      throw mapFunctionExceptionToCustom(e);
+    } catch (e) {
+      log('getWalletBalance error: $e');
+      throw ServerException('Something went wrong');
+    }
   }
 
   /// Sends money to a recipient via a Supabase RPC function.
@@ -36,21 +45,14 @@ class WalletRemoteDatasource {
     String? note,
   }) async {
     try {
-      if (recipientPhone.isEmpty) {
-        throw ServerException('Recipient phone is required');
+      log(
+        'sendMoney payload: ${{'recipient_phone_number': recipientPhone, 'amount': amount, 'sender_user_id': senderUserId, if (note != null && note.isNotEmpty) 'note': note}}',
+      );
+      if (_client.currentUser == null) {
+        throw UnauthorizedException('User not authenticated.');
       }
 
-      if (amount <= 0) {
-        throw ServerException('Amount must be greater than zero');
-      }
-      print({
-        'recipient_phone_number': recipientPhone,
-        'amount': amount,
-        'sender_user_id': senderUserId,
-        if (note != null && note.isNotEmpty) 'note': note,
-      });
-
-      final response = await _client.functions.invoke(
+      final response = await _client.invokeFn(
         'transfer-money',
 
         body: {
@@ -67,24 +69,25 @@ class WalletRemoteDatasource {
       log("data $data");
       return TransferResponseModel.fromJson(data);
     } on FunctionException catch (e) {
-      throw ServerException(e.details["error"]);
+      throw mapFunctionExceptionToCustom(e);
     } catch (e) {
-      print(e);
+      log('sendMoney error: $e');
       throw ServerException("Something went wrong");
     } // ✅ No return → success = no exception
   }
 
-  /// Adds money to the wallet by incrementing the balance via RPC.
+  /// Adds money to the wallet via the add-money-to-wallet edge function.
   Future<void> addMoney({required double amount}) async {
-    final userId = _client.auth.currentUser?.id;
-    if (userId == null) throw ServerException('User not authenticated.');
-    if (amount <= 0) throw ServerException('Amount must be greater than zero.');
+    try {
+      if (_client.currentUser == null) {
+        throw UnauthorizedException('User not authenticated.');
+      }
 
-    // Use a Postgres RPC to atomically increment the balance.
-    // The function runs as SECURITY DEFINER so it bypasses RLS for the update.
-    await _client.rpc(
-      'increment_wallet_balance',
-      params: {'p_user_id': userId, 'p_amount': amount},
-    );
+      await _client.invokeFn('add-money-to-wallet', body: {'amount': amount});
+    } on FunctionException catch (e) {
+      throw mapFunctionExceptionToCustom(e);
+    } catch (e) {
+      throw ServerException('Something went wrong');
+    }
   }
 }

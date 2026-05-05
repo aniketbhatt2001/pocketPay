@@ -13,7 +13,15 @@ class WalletRepositoryImpl implements WalletRepository {
   final WalletRemoteDatasource _datasource;
 
   @override
-  Future<Wallet> getWalletBalance() => _datasource.getWalletBalance();
+  Future<Result<Wallet>> getWalletBalance() async {
+    try {
+      final wallet = await _datasource.getWalletBalance();
+
+      return Result.success(wallet);
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
+  }
 
   @override
   Future<Result<TransferReponse>> sendMoney({
@@ -31,11 +39,17 @@ class WalletRepositoryImpl implements WalletRepository {
       );
       return Result.success(res.toEntity());
     } catch (e) {
-      return Result.failure(ServerFailure(e.toString()));
+      return Result.failure(mapExceptionToFailure(e));
     }
   }
 
   @override
-  Future<void> addMoney({required double amount}) =>
-      _datasource.addMoney(amount: amount);
+  Future<Result<void>> addMoney({required double amount}) async {
+    try {
+      await _datasource.addMoney(amount: amount);
+      return Result.success(null);
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
+  }
 }
