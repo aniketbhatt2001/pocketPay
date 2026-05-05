@@ -7,11 +7,10 @@ import 'package:pocket_pay_demo/features/transactions/domain/usecases/get_all_tr
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/mpin_screen.dart';
 import '../../features/home/presentation/pages/home_page.dart';
-import '../../features/payment/presentation/screens/payment_screen.dart';
 
 import '../../features/profile/presentation/screens/profile_setup_screen.dart';
 import '../../features/profile/presentation/screens/view_profile_screen.dart';
-import '../../features/qr_scanner/presentation/screens/qr_scanner_screen.dart';
+
 import '../../features/splash/presentation/screens/splash_screen.dart';
 
 import '../../features/transactions/data/repositories/transaction_repository_impl.dart';
@@ -40,8 +39,7 @@ class AppRouter {
         GetAllTransactions(txRepo),
       );
     },
-    AppRoutes.payment: (_) => const PaymentScreen(),
-    AppRoutes.qrScanner: (_) => const QrScannerScreen(),
+
     AppRoutes.profile: (_) => const ViewProfileScreen(),
     AppRoutes.profileSetup: (_) => const ProfileSetupScreen(),
     // AppRoutes.sendMoney: (_) => const SendMoneyPage(),
