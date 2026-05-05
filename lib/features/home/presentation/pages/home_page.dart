@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocket_pay_demo/core/routes/app_routes.dart';
 import 'package:pocket_pay_demo/features/send_money/presentation/pages/send_money_page.dart';
@@ -148,6 +147,7 @@ class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              // ── Logo ──────────────────────────────────────────────────────
               Row(
                 children: [
                   Container(
@@ -173,6 +173,24 @@ class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                     ),
                   ),
                 ],
+              ),
+
+              // ── Profile Icon ──────────────────────────────────────────────
+              GestureDetector(
+                onTap: () => Navigator.of(context).pushNamed(AppRoutes.profile),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: const BoxDecoration(
+                    color: AppColors.primaryFixed,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.person_rounded,
+                    size: 20,
+                    color: AppColors.primary,
+                  ),
+                ),
               ),
             ],
           ),

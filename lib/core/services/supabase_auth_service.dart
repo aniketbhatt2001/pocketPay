@@ -37,9 +37,9 @@ class SupabaseService {
       await _client.auth.signInWithOtp(phone: phoneNumber);
       return phoneNumber;
     } on AuthException catch (e) {
-      throw Exception(_mapAuthError(e));
+      throw UnauthorizedException(_mapAuthError(e));
     } catch (_) {
-      throw Exception('Failed to send OTP. Please try again.');
+      throw ServerException('Failed to send OTP. Please try again.');
     }
   }
 
@@ -57,15 +57,14 @@ class SupabaseService {
 
       final user = response.user;
       if (user == null) {
-        throw Exception('Verification failed. Please try again.');
+        throw ServerException('Verification failed. Please try again.');
       }
 
       return user;
     } on AuthException catch (e) {
-      throw Exception(_mapAuthError(e));
+      throw UnauthorizedException(_mapAuthError(e));
     } catch (e) {
-      if (e is Exception) rethrow;
-      throw Exception('Verification failed. Please try again.');
+      throw ServerException('Verification failed. Please try again.');
     }
   }
 

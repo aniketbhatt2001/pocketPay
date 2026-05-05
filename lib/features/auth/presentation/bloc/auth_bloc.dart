@@ -5,6 +5,7 @@ import '../../domain/entities/auth_user.dart';
 
 import '../../domain/usecases/check_session_usecase.dart';
 import '../../domain/usecases/send_otp_usecase.dart';
+import '../../domain/usecases/sign_out_usecase.dart';
 import '../../domain/usecases/verify_otp_usecase.dart';
 
 part 'auth_event.dart';
@@ -14,23 +15,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final SendOtpUseCase _sendOtp;
   final VerifyOtpUseCase _verifyOtp;
   final CheckSessionUseCase _checkSession;
-  // final CheckMpinUseCase _checkMpin;
+  final SignOutUseCase _signOut;
 
   AuthBloc({
     required SendOtpUseCase sendOtpUseCase,
     required VerifyOtpUseCase verifyOtpUseCase,
     required CheckSessionUseCase checkSessionUseCase,
-    // required CheckMpinUseCase checkMpinUseCase,
+    required SignOutUseCase signOutUseCase,
   }) : _sendOtp = sendOtpUseCase,
        _verifyOtp = verifyOtpUseCase,
        _checkSession = checkSessionUseCase,
-       //  _checkMpin = checkMpinUseCase,
+       _signOut = signOutUseCase,
        super(AuthInitial()) {
     on<AppStarted>(_onAppStarted);
     on<SendOtpRequested>(_onSendOtp);
     on<VerifyOtpRequested>(_onVerifyOtp);
     on<ResendOtpRequested>(_onResendOtp);
     on<AuthReset>(_onReset);
+    on<SignOutRequested>(_onSignOut);
   }
 
   //  : _sendOtp = sendOtpUseCase,
@@ -147,5 +149,20 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   void _onReset(AuthReset event, Emitter<AuthState> emit) {
     _lastPhoneNumber = null;
     emit(const AuthInitial());
+  }
+
+  Future<void> _onSignOut(
+    SignOutRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    try {
+      emit(const AuthLoading());
+      await _signOut();
+      _lastPhoneNumber = null;
+      emit(const AuthUnAuthenticated());
+    } catch (e) {
+      log('SignOut error: $e');
+      emit(const AuthUnAuthenticated());
+    }
   }
 }

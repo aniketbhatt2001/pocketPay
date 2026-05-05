@@ -31,3 +31,8 @@ final class AuthReset extends AuthEvent {
 final class AppStarted extends AuthEvent {
   const AppStarted();
 }
+
+/// User tapped "Logout" — signs out and clears session.
+final class SignOutRequested extends AuthEvent {
+  const SignOutRequested();
+}

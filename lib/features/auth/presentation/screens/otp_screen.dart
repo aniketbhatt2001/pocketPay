@@ -18,53 +18,44 @@ class OtpScreen extends StatefulWidget {
 }
 
 class _OtpScreenState extends State<OtpScreen> {
-  bool _canResend = false;
-  int _secondsLeft = 60;
-  late final _sub = Stream.periodic(const Duration(seconds: 1)).listen((_) {
-    if (!mounted) return;
-    setState(() {
-      if (_secondsLeft > 0) {
-        _secondsLeft--;
-      } else {
-        _canResend = true;
-      }
-    });
-  });
-
-  @override
-  void dispose() {
-    _sub.cancel();
-    super.dispose();
-  }
-
-  void _resetTimer() {
-    setState(() {
-      _canResend = false;
-      _secondsLeft = 60;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated) {
-          if (state.user.isMpinSet) {
-            if (state.user.isProfileComplete) {
-              Navigator.of(
-                context,
-              ).pushNamedAndRemoveUntil(AppRoutes.wallet, (_) => false);
-              return;
-            }
+          if (!state.user.isMpinSet) {
+            Navigator.of(
+              context,
+            ).pushNamedAndRemoveUntil(AppRoutes.setMpin, (_) => false);
+            return;
+          }
+          print("isProfileComplete ${state.user.isProfileComplete}");
+          if (!state.user.isProfileComplete) {
             Navigator.of(
               context,
             ).pushNamedAndRemoveUntil(AppRoutes.profileSetup, (_) => false);
             return;
-          } else {
-            Navigator.of(
-              context,
-            ).pushNamedAndRemoveUntil(AppRoutes.setMpin, (_) => false);
           }
+          Navigator.of(
+            context,
+          ).pushNamedAndRemoveUntil(AppRoutes.wallet, (_) => false);
+          return;
+          // if (state.user.isMpinSet) {
+          //   if (state.user.isProfileComplete) {
+          // Navigator.of(
+          //   context,
+          // ).pushNamedAndRemoveUntil(AppRoutes.wallet, (_) => false);
+          // return;
+          //   }
+          //   Navigator.of(
+          //     context,
+          //   ).pushNamedAndRemoveUntil(AppRoutes.profileSetup, (_) => false);
+          //   return;
+          // } else {
+          // Navigator.of(
+          //   context,
+          // ).pushNamedAndRemoveUntil(AppRoutes.setMpin, (_) => false);
+          // }
         } else if (state is AuthUnAuthenticated) {
           if (state.msg != null) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -75,9 +66,6 @@ class _OtpScreenState extends State<OtpScreen> {
             );
           }
           // Stay on OTP screen — user can retry
-        } else if (state is OtpSent) {
-          // Resend succeeded — restart the countdown
-          _resetTimer();
         }
       },
       builder: (context, state) {

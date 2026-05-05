@@ -16,7 +16,7 @@ class WalletRemoteDatasource {
   /// Fetches the wallet row for the currently authenticated user.
   Future<WalletModel> getWalletBalance() async {
     final userId = _client.auth.currentUser?.id;
-    if (userId == null) throw Exception('User not authenticated.');
+    if (userId == null) throw UnauthorizedException('User not authenticated.');
 
     final data =
         await _client
@@ -37,11 +37,11 @@ class WalletRemoteDatasource {
   }) async {
     try {
       if (recipientPhone.isEmpty) {
-        throw InvalidResponseException('Recipient phone is required');
+        throw ServerException('Recipient phone is required');
       }
 
       if (amount <= 0) {
-        throw InvalidResponseException('Amount must be greater than zero');
+        throw ServerException('Amount must be greater than zero');
       }
       print({
         'recipient_phone_number': recipientPhone,
@@ -49,8 +49,10 @@ class WalletRemoteDatasource {
         'sender_user_id': senderUserId,
         if (note != null && note.isNotEmpty) 'note': note,
       });
+
       final response = await _client.functions.invoke(
         'transfer-money',
+
         body: {
           'recipient_phone_number': recipientPhone,
           'amount': amount,
@@ -59,19 +61,9 @@ class WalletRemoteDatasource {
         },
       );
       log("response ${response.data}");
-      if (response.status != 200) {
-        final message =
-            (response.data as Map<String, dynamic>?)?['error'] as String? ??
-            'Failed to send money';
-
-        throw ServerException(message);
-      }
 
       final data = response.data;
 
-      if (data != null && data is! Map<String, dynamic>) {
-        throw InvalidResponseException('Invalid response format');
-      }
       log("data $data");
       return TransferResponseModel.fromJson(data);
     } on FunctionException catch (e) {
@@ -85,8 +77,8 @@ class WalletRemoteDatasource {
   /// Adds money to the wallet by incrementing the balance via RPC.
   Future<void> addMoney({required double amount}) async {
     final userId = _client.auth.currentUser?.id;
-    if (userId == null) throw Exception('User not authenticated.');
-    if (amount <= 0) throw Exception('Amount must be greater than zero.');
+    if (userId == null) throw ServerException('User not authenticated.');
+    if (amount <= 0) throw ServerException('Amount must be greater than zero.');
 
     // Use a Postgres RPC to atomically increment the balance.
     // The function runs as SECURITY DEFINER so it bypasses RLS for the update.

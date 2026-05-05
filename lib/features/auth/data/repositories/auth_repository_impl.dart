@@ -38,10 +38,10 @@ class AuthRepositoryImpl implements AuthRepository {
         phoneNumber: phoneNumber,
         token: smsCode,
       );
-      print(user.toJson());
+      log("verifyOtp  user ${user.toJson()}");
       // 2. Fetch the public profile via edge function.
       final profile = await _fetchUserById(user.id);
-
+      log("_fetchUserById  Map ${profile}");
       final authUser = AuthUser(
         uid: user.id,
         phoneNumber: phoneNumber,
@@ -49,6 +49,10 @@ class AuthRepositoryImpl implements AuthRepository {
 
         biometricEnabled: (profile['biometric_enabled'] as bool?) ?? false,
         isMpinSet: (profile['is_mpin_set'] as bool?) ?? false,
+        isProfileComplete: (profile['is_profile_complete'] as bool?) ?? false,
+        email: (profile['email'] as String?) ?? "",
+        firstName: (profile['first_name'] as String?) ?? "",
+        lastName: (profile['last_name'] as String?) ?? "",
       );
 
       return Result.success(authUser);
@@ -126,8 +130,9 @@ class AuthRepositoryImpl implements AuthRepository {
       }
 
       final row = await _fetchUserById(id);
+      log(row.toString());
       final authModel = AuthModel.fromJson(row);
-      log('authModel: ${authModel.toJson()}');
+
       return Result.success(authModel.toEntity());
     } on ServerException catch (e) {
       return Result.failure(ServerFailure(e.message));

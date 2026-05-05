@@ -5,6 +5,7 @@ import 'package:pocket_pay_demo/features/auth/data/repositories/auth_repository_
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:pocket_pay_demo/features/auth/domain/usecases/check_session_usecase.dart';
 import 'package:pocket_pay_demo/features/auth/domain/usecases/send_otp_usecase.dart';
+import 'package:pocket_pay_demo/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:pocket_pay_demo/features/auth/domain/usecases/verify_otp_usecase.dart';
 import 'package:pocket_pay_demo/features/auth/presentation/bloc/auth_bloc.dart';
 import 'core/config/app_config.dart';
@@ -39,6 +40,7 @@ class MainApp extends StatelessWidget {
               sendOtpUseCase: SendOtpUseCase(repo),
               verifyOtpUseCase: VerifyOtpUseCase(repo),
               checkSessionUseCase: CheckSessionUseCase(repo),
+              signOutUseCase: SignOutUseCase(repo),
               // checkMpinUseCase: CheckMpinUseCase(repo),
             );
           },
