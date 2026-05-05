@@ -40,11 +40,7 @@ class MpinCubit extends Cubit<MpinState> {
       final res = await _verifyMpin(userId: userId, rawMpin: rawMpin);
       res.fold(
         onSuccess: (data) {
-          if (data) {
-            emit(MpinSuccess());
-          } else {
-            emit(MpinError("Wrong pin entered"));
-          }
+          emit(MpinSuccess());
           // emit(MpinSuccess());
         },
         onFailure: (failure) {

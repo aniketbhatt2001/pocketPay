@@ -54,9 +54,20 @@ class _SplashScreenState extends State<SplashScreen>
       listener: (context, state) {
         switch (state) {
           case AuthAuthenticated():
-            state.user.isMpinSet
-                ? Navigator.of(context).pushReplacementNamed(AppRoutes.wallet)
-                : Navigator.of(context).pushReplacementNamed(AppRoutes.mpin);
+            if (state.user.isProfileComplete) {
+              Navigator.of(
+                context,
+              ).pushNamedAndRemoveUntil(AppRoutes.wallet, (_) => false);
+            } else {
+              Navigator.of(
+                context,
+              ).pushNamedAndRemoveUntil(AppRoutes.profileSetup, (_) => false);
+            }
+
+            break;
+          //state.user.isMpinSet
+          // ? Navigator.of(context).pushReplacementNamed(AppRoutes.wallet)
+          // : Navigator.of(context).pushReplacementNamed(AppRoutes.setMpin);
           // case AppStartMpinRequired():
           //   Navigator.of(context).pushReplacementNamed(AppRoutes.mpin);
           case AuthUnAuthenticated():

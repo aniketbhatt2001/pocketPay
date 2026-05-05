@@ -5,7 +5,8 @@ import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/mpin_screen.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/payment/presentation/screens/payment_screen.dart';
-import '../../features/profile/presentation/screens/profile_screen.dart';
+
+import '../../features/profile/presentation/screens/profile_setup_screen.dart';
 import '../../features/qr_scanner/presentation/screens/qr_scanner_screen.dart';
 import '../../features/splash/presentation/screens/splash_screen.dart';
 import '../../features/transactions/data/datasources/transaction_remote_datasource.dart';
@@ -24,7 +25,7 @@ class AppRouter {
   static Map<String, WidgetBuilder> get routes => {
     AppRoutes.splash: (_) => const SplashScreen(),
     AppRoutes.login: (_) => const LoginScreen(),
-    AppRoutes.mpin: (_) => const MpinScreen(),
+    AppRoutes.setMpin: (_) => const MpinScreen(),
     AppRoutes.wallet: (_) {
       final walletRepo = WalletRepositoryImpl(WalletRemoteDatasource());
       final txRepo = TransactionRepositoryImpl(TransactionRemoteDatasource());
@@ -35,7 +36,8 @@ class AppRouter {
     },
     AppRoutes.payment: (_) => const PaymentScreen(),
     AppRoutes.qrScanner: (_) => const QrScannerScreen(),
-    AppRoutes.profile: (_) => const ProfileScreen(),
+    AppRoutes.profile: (_) => const ProfileSetupScreen(),
+    AppRoutes.profileSetup: (_) => const ProfileSetupScreen(),
     // AppRoutes.sendMoney: (_) => const SendMoneyPage(),
   };
 

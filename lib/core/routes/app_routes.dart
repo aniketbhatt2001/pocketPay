@@ -7,7 +7,6 @@ class AppRoutes {
   // Auth
   static const String login = '/login';
   static const String otp = '/otp';
-  static const String mpin = '/mpin';
 
   // Main
   static const String wallet = '/wallet';
@@ -17,4 +16,6 @@ class AppRoutes {
   static const String profile = '/profile';
   static const String sendMoney = '/sendMoney';
   static const String enterMpin = '/enterMpin';
+  static const String profileSetup = '/profile-setup';
+  static const String setMpin = '/setMpin';
 }

@@ -30,7 +30,7 @@ abstract class AuthRepository {
   /// Verifies the MPIN for the given user via a secure server-side RPC.
   ///
   /// Returns `true` if the PIN matches, `false` otherwise.
-  Future<Result<bool>> verifyMpin({
+  Future<Result<void>> verifyMpin({
     required String userId,
     required String rawMpin,
   });
@@ -41,4 +41,10 @@ abstract class AuthRepository {
 
   /// Signs the current user out.
   Future<Result<void>> signOut();
+  Future<Result<void>> setUserProfile({
+    required String userId,
+    required String email,
+    required String firstName,
+    required String lastName,
+  });
 }

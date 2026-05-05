@@ -3,9 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocket_pay_demo/features/auth/domain/usecases/verify_mpin_usecase.dart';
 import 'package:pocket_pay_demo/features/auth/presentation/bloc/auth_bloc.dart';
-
+import 'package:pocket_pay_demo/features/profile/presentation/screens/profile_setup_screen.dart';
 import '../../../../core/theme/theme.dart';
-import '../../../../core/routes/app_routes.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/services/supabase_auth_service.dart';
 import '../../data/repositories/auth_repository_impl.dart';
@@ -13,32 +12,14 @@ import '../../domain/usecases/set_mpin_usecase.dart';
 import '../bloc/mpin_cubit.dart';
 import '../widgets/login_background.dart';
 
-/// Screen for setting a new 6-digit MPIN.
-class MpinScreen extends StatelessWidget {
+class MpinScreen extends StatefulWidget {
   const MpinScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final repo = AuthRepositoryImpl(SupabaseService());
-    return BlocProvider(
-      create:
-          (_) => MpinCubit(
-            setMpinUseCase: SetMpinUseCase(repo),
-            verifyMpinUseCase: VerifyMpinUseCase(repo),
-          ),
-      child: const _MpinView(),
-    );
-  }
+  State<MpinScreen> createState() => MpinScreenState();
 }
 
-class _MpinView extends StatefulWidget {
-  const _MpinView();
-
-  @override
-  State<_MpinView> createState() => _MpinViewState();
-}
-
-class _MpinViewState extends State<_MpinView>
+class MpinScreenState extends State<MpinScreen>
     with SingleTickerProviderStateMixin {
   static const int _pinLength = 6;
 
@@ -104,15 +85,12 @@ class _MpinViewState extends State<_MpinView>
     print("_activePin $_activePin");
   }
 
-  void _onContinue() {
+  void _onContinue(MpinCubit mpinCubit) {
     if (!_canContinue) return;
     final state = context.read<AuthBloc>().state;
     if (state is! AuthAuthenticated) return;
 
-    context.read<MpinCubit>().saveMpin(
-      userId: state.user.uid,
-      rawMpin: _pin.join(),
-    );
+    mpinCubit.saveMpin(userId: state.user.uid, rawMpin: _pin.join());
   }
 
   Future<void> _triggerMismatch() async {
@@ -140,54 +118,66 @@ class _MpinViewState extends State<_MpinView>
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<MpinCubit, MpinState>(
-      listener: (context, state) {
-        if (state is MpinSuccess) {
-          Navigator.of(
-            context,
-          ).pushNamedAndRemoveUntil(AppRoutes.wallet, (_) => false);
-        } else if (state is MpinError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: AppColors.error,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: AppRadius.borderLg),
-            ),
-          );
-        }
+    // final repo = AuthRepositoryImpl(SupabaseService());
+    return BlocProvider(
+      create: (_) {
+        final repo = AuthRepositoryImpl(SupabaseService());
+        return MpinCubit(
+          setMpinUseCase: SetMpinUseCase(repo),
+          verifyMpinUseCase: VerifyMpinUseCase(repo),
+        );
       },
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: _MpinAppBar(onBack: () => Navigator.of(context).maybePop()),
-        body: Stack(
-          children: [
-            const LoginBackground(),
-            SafeArea(
-              top: false,
-              child: Column(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.containerMargin,
-                      ),
-                      child: Column(
-                        children: [
-                          const SizedBox(height: AppSpacing.lg),
-                          _buildHero(),
-                          const SizedBox(height: AppSpacing.lg),
-                          _buildPinRows(),
-                        ],
+      child: BlocListener<MpinCubit, MpinState>(
+        listener: (context, state) {
+          if (state is MpinSuccess) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const ProfileSetupScreen(),
+              ),
+            );
+          } else if (state is MpinError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: AppColors.error,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: AppRadius.borderLg),
+              ),
+            );
+          }
+        },
+        child: Scaffold(
+          backgroundColor: AppColors.background,
+          appBar: _MpinAppBar(onBack: () => Navigator.of(context).maybePop()),
+          body: Stack(
+            children: [
+              const LoginBackground(),
+              SafeArea(
+                top: false,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.containerMargin,
+                        ),
+                        child: Column(
+                          children: [
+                            const SizedBox(height: AppSpacing.lg),
+                            _buildHero(),
+                            const SizedBox(height: AppSpacing.lg),
+                            _buildPinRows(),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  _buildKeypad(),
-                  _buildContinueButton(),
-                ],
+                    _buildKeypad(),
+                    _buildContinueButton(),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -360,7 +350,11 @@ class _MpinViewState extends State<_MpinView>
             AppSpacing.md,
           ),
           child: AppButton(
-            onPressed: (!isLoading && _canContinue) ? _onContinue : null,
+            onPressed: () {
+              (!isLoading && _canContinue)
+                  ? _onContinue(context.read<MpinCubit>())
+                  : null;
+            },
             child:
                 isLoading
                     ? const SizedBox(

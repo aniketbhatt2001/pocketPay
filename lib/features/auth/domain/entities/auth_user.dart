@@ -7,19 +7,27 @@ class AuthUser {
     required this.uid,
     required this.phoneNumber,
     this.createdAt,
-    this.fullName,
+
+    this.firstName,
+    this.lastName,
+    this.email,
     this.biometricEnabled = false,
     this.isMpinSet = false,
+    this.isProfileComplete = false,
   });
 
   final String uid;
   final String phoneNumber;
-  final String? fullName;
+
+  final String? firstName;
+  final String? lastName;
+  final String? email;
   final bool biometricEnabled;
   final DateTime? createdAt;
   final bool isMpinSet;
+  final bool isProfileComplete;
 
   @override
   String toString() =>
-      'AuthUser(uid: $uid, phone: $phoneNumber, createdAt: $createdAt , isMpinSet: $isMpinSet)';
+      'AuthUser(uid: $uid, phone: $phoneNumber, createdAt: $createdAt, isMpinSet: $isMpinSet $isProfileComplete)';
 }

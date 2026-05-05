@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:pocket_pay_demo/core/error/exceptions.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:supabase/supabase.dart' show FunctionResponse;
 
@@ -79,13 +80,34 @@ class SupabaseService {
     String name, {
     Map<String, dynamic>? body,
     Map<String, dynamic>? queryParams,
-  }) {
-    log("body $body , name $name queryParameters $queryParams");
-    return _client.functions.invoke(
-      name,
-      body: body,
-      queryParameters: queryParams,
-    );
+  }) async {
+    try {
+      log("body $body , name $name queryParameters $queryParams");
+      final response = await _client.functions.invoke(
+        name,
+        body: body,
+        queryParameters: queryParams,
+      );
+      if (response.status != 200) {
+        final message =
+            (response.data as Map<String, dynamic>?)?['error'] as String? ??
+            'Failed to set MPIN';
+        throw ServerException(message);
+      }
+
+      if (response.data is! Map) {
+        throw InvalidResponseException("Invalid data");
+      }
+      return response;
+    } on FunctionException catch (e) {
+      final message =
+          (e.details.data as Map<String, dynamic>?)?['error'] as String? ??
+          'Something went wrong';
+      throw ServerException(message);
+    } catch (e) {
+      print(e);
+      throw ServerException("Something went wrong");
+    }
   }
 
   String _mapAuthError(AuthException e) {

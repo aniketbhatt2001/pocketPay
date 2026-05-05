@@ -38,7 +38,7 @@ class AuthRepositoryImpl implements AuthRepository {
         phoneNumber: phoneNumber,
         token: smsCode,
       );
-
+      print(user.toJson());
       // 2. Fetch the public profile via edge function.
       final profile = await _fetchUserById(user.id);
 
@@ -46,17 +46,20 @@ class AuthRepositoryImpl implements AuthRepository {
         uid: user.id,
         phoneNumber: phoneNumber,
         createdAt: DateTime.tryParse(user.createdAt),
-        fullName: profile['full_name'] as String?,
+
         biometricEnabled: (profile['biometric_enabled'] as bool?) ?? false,
         isMpinSet: (profile['is_mpin_set'] as bool?) ?? false,
       );
 
       return Result.success(authUser);
     } on UnauthorizedException catch (e) {
+      print(" UnauthorizedException $e");
       return Result.failure(UnauthorizedFailure(e.message));
     } on ServerException catch (e) {
+      print(" ServerException $e");
       return Result.failure(ServerFailure(e.message));
     } catch (e) {
+      print(" mapExceptionToFailure $e");
       return Result.failure(mapExceptionToFailure(e));
     }
   }
@@ -67,17 +70,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required String rawMpin,
   }) async {
     try {
-      final response = await _service.invokeFn(
-        'set-mpin',
-        body: {'raw_mpin': rawMpin},
-      );
-
-      if (response.status != 200) {
-        final message =
-            (response.data as Map<String, dynamic>?)?['error'] as String? ??
-            'Failed to set MPIN';
-        throw ServerException(message);
-      }
+      await _service.invokeFn('set-mpin', body: {'raw_mpin': rawMpin});
 
       return const Result.success(null);
     } on ServerException catch (e) {
@@ -88,7 +81,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Result<bool>> verifyMpin({
+  Future<Result<void>> verifyMpin({
     required String userId,
     required String rawMpin,
   }) async {
@@ -101,26 +94,17 @@ class AuthRepositoryImpl implements AuthRepository {
         },
       );
 
-      if (response.status != 200) {
-        final message =
-            (response.data as Map<String, dynamic>?)?['error'] as String? ??
-            'Failed to verify MPIN';
-        throw ServerException(message);
-      }
-
       final data = response.data;
-
-      if (data is! Map<String, dynamic>) {
-        throw InvalidResponseException("Invalid Response");
-      }
 
       final match = data['match'];
 
       if (match is! bool) {
         throw InvalidResponseException("Invalid match value");
       }
-
-      return Result.success(match); // ✅ true OR false
+      if (match == false) {
+        return Result.failure(ServerFailure("Wrong pin entered"));
+      }
+      return Result.success(null); // ✅ true OR false
     } catch (e) {
       return Result.failure(mapExceptionToFailure(e));
     }
@@ -172,14 +156,42 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Map<String, dynamic>> _fetchUserById(String id) async {
     final response = await _service.invokeFn('get-user', body: {'id': id});
 
-    if (response.status != 200) {
-      final message =
-          (response.data as Map<String, dynamic>?)?['error'] as String? ??
-          'Failed to fetch user profile';
-      throw ServerException(message);
-    }
-
     return (response.data as Map<String, dynamic>)['data']
         as Map<String, dynamic>;
+  }
+
+  @override
+  Future<Result<void>> setUserProfile({
+    required String userId,
+    required String email,
+    required String firstName,
+    required String lastName,
+  }) async {
+    try {
+      print("setUserProfile");
+      final response = await _service.invokeFn(
+        'setProfileInfo',
+        body: {
+          'user_id': userId,
+          'first_name': firstName,
+          'last_name': lastName,
+          'email': email,
+        },
+      );
+
+      final data = response.data;
+
+      final success = data['success'] as bool?;
+
+      if (success == false) {
+        return Result.failure(
+          ServerFailure("Profile setup failed"), // map properly
+        );
+      }
+
+      return Result.success(null); // ✅ true OR false
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
   }
 }

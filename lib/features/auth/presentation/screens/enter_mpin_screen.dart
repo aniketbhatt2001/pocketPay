@@ -254,12 +254,8 @@ class _EnterMpinViewState extends State<_EnterMpinView> {
                   onPressed:
                       _canContinue
                           ? () {
-                            print(_pin);
                             final pin = _pin.join();
-                            final state =
-                                context
-                                    .read<AuthBloc>()
-                                    .state; //  context.read<MpinCubit>().verifyMpin(userId: userId, rawMpin: )
+                            final state = context.read<AuthBloc>().state;
                             if (state is! AuthAuthenticated) return;
 
                             context.read<MpinCubit>().verifyMpin(

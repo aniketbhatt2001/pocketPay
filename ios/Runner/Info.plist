@@ -53,5 +53,13 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSLocalNetworkUsageDescription</key>
+<string>This app needs access to devices on your local network.</string>
+
+<key>NSBonjourServices</key>
+<array>
+    <string>_http._tcp</string>
+    <string>_dartobservatory._tcp</string>
+</array>
 </dict>
 </plist>

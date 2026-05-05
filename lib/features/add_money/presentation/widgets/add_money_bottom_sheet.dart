@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pocket_pay_demo/core/widgets/app_button.dart';
 import 'package:pocket_pay_demo/features/auth/presentation/bloc/auth_bloc.dart';
 
 import '../../../../core/config/app_config.dart';
@@ -66,6 +67,11 @@ class AddMoneySheetState extends State<AddMoneySheet> {
       amount: amount,
       userPhone: authState.user.phoneNumber,
     );
+    // Source - https://stackoverflow.com/a/56946311
+    // Posted by Pascal, modified by community. See post 'Timeline' for change history
+    // Retrieved 2026-05-04, License - CC BY-SA 4.0
+
+    FocusManager.instance.primaryFocus?.unfocus();
   }
 
   @override
@@ -227,18 +233,9 @@ class AddMoneySheetState extends State<AddMoneySheet> {
                     final isLoading =
                         state is AddMoneyProcessing ||
                         state is AddMoneyUpdatingWallet;
-                    return FilledButton(
+                    return AppButton(
                       onPressed: isLoading ? null : () => _submit(context),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        disabledBackgroundColor: AppColors.primary.withValues(
-                          alpha: 0.5,
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 18),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: AppRadius.borderXl,
-                        ),
-                      ),
+
                       child:
                           isLoading
                               ? const SizedBox(

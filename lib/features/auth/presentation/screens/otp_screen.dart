@@ -49,9 +49,22 @@ class _OtpScreenState extends State<OtpScreen> {
     return BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated) {
-          Navigator.of(
-            context,
-          ).pushNamedAndRemoveUntil(AppRoutes.wallet, (_) => false);
+          if (state.user.isMpinSet) {
+            if (state.user.isProfileComplete) {
+              Navigator.of(
+                context,
+              ).pushNamedAndRemoveUntil(AppRoutes.wallet, (_) => false);
+              return;
+            }
+            Navigator.of(
+              context,
+            ).pushNamedAndRemoveUntil(AppRoutes.profileSetup, (_) => false);
+            return;
+          } else {
+            Navigator.of(
+              context,
+            ).pushNamedAndRemoveUntil(AppRoutes.setMpin, (_) => false);
+          }
         } else if (state is AuthUnAuthenticated) {
           if (state.msg != null) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -69,42 +82,37 @@ class _OtpScreenState extends State<OtpScreen> {
       },
       builder: (context, state) {
         final isLoading = state is AuthLoading;
-        return AnnotatedRegion<SystemUiOverlayStyle>(
-          value: SystemUiOverlayStyle.dark.copyWith(
-            statusBarColor: Colors.transparent,
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          appBar: _OtpAppBar(
+            onBack: () {
+              context.read<AuthBloc>().add(const AuthReset());
+              Navigator.of(context).pop();
+            },
           ),
-          child: Scaffold(
-            backgroundColor: AppColors.background,
-            appBar: _OtpAppBar(
-              onBack: () {
-                context.read<AuthBloc>().add(const AuthReset());
-                Navigator.of(context).pop();
-              },
-            ),
-            body: Stack(
-              children: [
-                const LoginBackground(),
-                SafeArea(
-                  top: false,
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.containerMargin,
-                      vertical: AppSpacing.xl,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: AppSpacing.xl),
-                        _buildHero(),
-                        const SizedBox(height: AppSpacing.xl),
-                        _buildCard(context, isLoading),
-                        const SizedBox(height: AppSpacing.md),
-                      ],
-                    ),
+          body: Stack(
+            children: [
+              const LoginBackground(),
+              SafeArea(
+                top: false,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.containerMargin,
+                    vertical: AppSpacing.xl,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: AppSpacing.xl),
+                      _buildHero(),
+                      const SizedBox(height: AppSpacing.xl),
+                      _buildCard(context, isLoading),
+                      const SizedBox(height: AppSpacing.md),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },

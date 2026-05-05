@@ -7,7 +7,7 @@ class VerifyMpinUseCase {
 
   final AuthRepository _repository;
 
-  Future<Result<bool>> call({required String userId, required String rawMpin}) {
+  Future<Result<void>> call({required String userId, required String rawMpin}) {
     return _repository.verifyMpin(userId: userId, rawMpin: rawMpin);
   }
 }
