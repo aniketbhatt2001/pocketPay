@@ -1,3 +1,5 @@
+import 'package:pocket_pay_demo/core/result/result.dart';
+
 import '../entities/transaction.dart';
 import '../repositories/transaction_repository.dart';
 
@@ -7,5 +9,5 @@ class GetAllTransactions {
 
   final TransactionRepository _repository;
 
-  Future<List<Transaction>> call() => _repository.getAllTransactions();
+  Future<Result<List<Transaction>>> call() => _repository.getAllTransactions();
 }

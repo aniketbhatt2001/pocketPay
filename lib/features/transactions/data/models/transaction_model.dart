@@ -1,41 +1,98 @@
 import '../../domain/entities/transaction.dart';
 
-/// Data model for deserialising transaction rows from Supabase.
 class TransactionModel extends Transaction {
   const TransactionModel({
     required super.id,
     required super.walletId,
-    required super.amount,
+    required super.userId,
     required super.type,
-    required super.description,
+    required super.amount,
+    super.description,
+    required super.status,
+    super.referenceId,
+    super.balanceBefore,
+    super.balanceAfter,
     required super.createdAt,
-    super.recipientName,
-    super.note,
+    required super.updatedAt,
   });
 
+  /// Creates a [TransactionModel] from a JSON map (e.g., from Supabase).
   factory TransactionModel.fromJson(Map<String, dynamic> json) {
-    final typeStr = (json['type'] as String?)?.toLowerCase() ?? 'debit';
     return TransactionModel(
       id: json['id'] as String,
       walletId: json['wallet_id'] as String,
+      userId: json['user_id'] as String,
+      type: TransactionType.fromString(json['type'] as String),
       amount: (json['amount'] as num).toDouble(),
-      type:
-          typeStr == 'credit' ? TransactionType.credit : TransactionType.debit,
-      description: (json['description'] as String?) ?? '',
+      description: json['description'] as String?,
+      status: TransactionStatus.fromString(
+        json['status'] as String? ?? 'pending',
+      ),
+      referenceId: json['reference_id'] as String?,
+      balanceBefore:
+          json['balance_before'] != null
+              ? (json['balance_before'] as num).toDouble()
+              : null,
+      balanceAfter:
+          json['balance_after'] != null
+              ? (json['balance_after'] as num).toDouble()
+              : null,
       createdAt: DateTime.parse(json['created_at'] as String),
-      recipientName: json['recipient_name'] as String?,
-      note: json['note'] as String?,
+      updatedAt: DateTime.parse(json['updated_at'] as String),
     );
   }
 
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'wallet_id': walletId,
-    'amount': amount,
-    'type': type.name,
-    'description': description,
-    'created_at': createdAt.toIso8601String(),
-    'recipient_name': recipientName,
-    'note': note,
-  };
+  /// Converts this model to a JSON map for persistence.
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'wallet_id': walletId,
+      'user_id': userId,
+      'type': type.value,
+      'amount': amount,
+      'description': description,
+      'status': status.value,
+      'reference_id': referenceId,
+      'balance_before': balanceBefore,
+      'balance_after': balanceAfter,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
+    };
+  }
+
+  /// Creates a [TransactionModel] from a domain [Transaction] entity.
+  factory TransactionModel.fromEntity(Transaction entity) {
+    return TransactionModel(
+      id: entity.id,
+      walletId: entity.walletId,
+      userId: entity.userId,
+      type: entity.type,
+      amount: entity.amount,
+      description: entity.description,
+      status: entity.status,
+      referenceId: entity.referenceId,
+      balanceBefore: entity.balanceBefore,
+      balanceAfter: entity.balanceAfter,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+    );
+  }
+
+  /// Converts to domain entity.
+  Transaction toEntity() {
+    return Transaction(
+      id: id,
+      walletId: walletId,
+      userId: userId,
+      type: type,
+      amount: amount,
+      description: description,
+      status: status,
+      referenceId: referenceId,
+      balanceBefore: balanceBefore,
+      balanceAfter: balanceAfter,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+    );
+  }
 }

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:pocket_pay_demo/core/services/supabase_auth_service.dart';
 import 'package:pocket_pay_demo/features/send_money/presentation/pages/send_money_page.dart';
+import 'package:pocket_pay_demo/features/transactions/data/remote_datasource.dart/transaction_datasource.dart';
+import 'package:pocket_pay_demo/features/transactions/domain/usecases/get_all_transactions.dart';
 
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/mpin_screen.dart';
@@ -10,9 +13,9 @@ import '../../features/profile/presentation/screens/profile_setup_screen.dart';
 import '../../features/profile/presentation/screens/view_profile_screen.dart';
 import '../../features/qr_scanner/presentation/screens/qr_scanner_screen.dart';
 import '../../features/splash/presentation/screens/splash_screen.dart';
-import '../../features/transactions/data/datasources/transaction_remote_datasource.dart';
+
 import '../../features/transactions/data/repositories/transaction_repository_impl.dart';
-import '../../features/transactions/domain/usecases/get_recent_transactions.dart';
+
 import '../../features/wallet/data/datasources/wallet_remote_datasource.dart';
 import '../../features/wallet/data/repositories/wallet_repository_impl.dart';
 import '../../features/wallet/domain/usecases/get_wallet_balance.dart';
@@ -29,10 +32,12 @@ class AppRouter {
     AppRoutes.setMpin: (_) => const MpinScreen(),
     AppRoutes.wallet: (_) {
       final walletRepo = WalletRepositoryImpl(WalletRemoteDatasource());
-      final txRepo = TransactionRepositoryImpl(TransactionRemoteDatasource());
+      final txRepo = TransactionRepositoryImpl(
+        TransactionRemoteDataSource(SupabaseService()),
+      );
       return HomePage(
         GetWalletBalanceUseCase(walletRepo),
-        GetRecentTransactions(txRepo),
+        GetAllTransactions(txRepo),
       );
     },
     AppRoutes.payment: (_) => const PaymentScreen(),

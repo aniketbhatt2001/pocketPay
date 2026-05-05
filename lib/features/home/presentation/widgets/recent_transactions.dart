@@ -8,8 +8,8 @@ import '../../../transactions/domain/entities/transaction.dart';
 import '../../../transactions/presentation/widgets/transaction_item.dart';
 
 /// Recent transactions section shown on the home page.
-class RecentTransactions extends StatelessWidget {
-  const RecentTransactions({
+class AllTransactions extends StatelessWidget {
+  const AllTransactions({
     super.key,
     required this.transactions,
     this.onViewAll,
@@ -23,14 +23,6 @@ class RecentTransactions extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'RECENT (LAST 3 TXNS)',
-          style: AppTypography.labelSm.copyWith(
-            color: AppColors.onSurfaceVariant,
-            letterSpacing: 1.1,
-            fontSize: 11,
-          ),
-        ),
         const SizedBox(height: AppSpacing.base),
         if (transactions.isEmpty)
           _EmptyTransactions()
@@ -64,18 +56,6 @@ class RecentTransactions extends StatelessWidget {
             ),
           ),
         const SizedBox(height: AppSpacing.md),
-        Center(
-          child: TextButton(
-            onPressed: onViewAll,
-            child: Text(
-              'View All',
-              style: AppTypography.button.copyWith(
-                color: AppColors.primaryContainer,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ),
       ],
     );
   }

@@ -1,30 +1,71 @@
-/// Domain entity representing a single financial transaction.
+enum TransactionType {
+  deposit,
+  send,
+  receive;
+
+  static TransactionType fromString(String value) {
+    return TransactionType.values.firstWhere(
+      (e) => e.name == value,
+      orElse: () => throw ArgumentError('Unknown transaction type: $value'),
+    );
+  }
+
+  String get value => name; // 'deposit', 'send', 'receive'
+}
+
+enum TransactionStatus {
+  pending,
+  completed,
+  failed;
+
+  static TransactionStatus fromString(String value) {
+    return TransactionStatus.values.firstWhere(
+      (e) => e.name == value,
+      orElse: () => throw ArgumentError('Unknown transaction status: $value'),
+    );
+  }
+
+  String get value => name; // 'pending', 'completed', 'failed'
+}
+
 class Transaction {
+  final String id;
+  final String walletId;
+  final String userId;
+  final TransactionType type;
+  final double amount;
+  final String? description;
+  final TransactionStatus status;
+  final String? referenceId;
+  final double? balanceBefore;
+  final double? balanceAfter;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
   const Transaction({
     required this.id,
     required this.walletId,
-    required this.amount,
+    required this.userId,
     required this.type,
-    required this.description,
+    required this.amount,
+    this.description,
+    required this.status,
+    this.referenceId,
+    this.balanceBefore,
+    this.balanceAfter,
     required this.createdAt,
-    this.recipientName,
-    this.note,
+    required this.updatedAt,
   });
 
-  final String id;
-  final String walletId;
-  final double amount;
-  final TransactionType type;
-  final String description;
-  final DateTime createdAt;
-  final String? recipientName;
-  final String? note;
+  // Convenience getters
+  bool get isPending => status == TransactionStatus.pending;
+  bool get isCompleted => status == TransactionStatus.completed;
+  bool get isFailed => status == TransactionStatus.failed;
+  bool get isDeposit => type == TransactionType.deposit;
+  bool get isSend => type == TransactionType.send;
+  bool get isReceive => type == TransactionType.receive;
 
-  bool get isCredit => type == TransactionType.credit;
-
-  @override
-  String toString() =>
-      'Transaction(id: $id, amount: $amount, type: $type, description: $description)';
+  /// True for any inbound money movement (deposit or receive).
+  bool get isIncoming =>
+      type == TransactionType.deposit || type == TransactionType.receive;
 }
-
-enum TransactionType { credit, debit }

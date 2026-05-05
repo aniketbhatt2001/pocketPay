@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocket_pay_demo/core/routes/app_routes.dart';
 import 'package:pocket_pay_demo/features/send_money/presentation/pages/send_money_page.dart';
-import 'package:pocket_pay_demo/features/transactions/domain/usecases/get_recent_transactions.dart';
+import 'package:pocket_pay_demo/features/transactions/domain/usecases/get_all_transactions.dart';
+
 import 'package:pocket_pay_demo/features/wallet/domain/usecases/get_wallet_balance.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
@@ -16,12 +17,8 @@ import '../widgets/wallet_card.dart';
 
 class HomePage extends StatelessWidget {
   final GetWalletBalanceUseCase getWalletBalance;
-  final GetRecentTransactions getRecentTransactions;
-  const HomePage(
-    this.getWalletBalance,
-    this.getRecentTransactions, {
-    super.key,
-  });
+  final GetAllTransactions getAllTransactions;
+  const HomePage(this.getWalletBalance, this.getAllTransactions, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +26,7 @@ class HomePage extends StatelessWidget {
       create:
           (context) => HomeCubit(
             getWalletBalance: getWalletBalance,
-            getRecentTransactions: getRecentTransactions,
+            getAllTransactions: getAllTransactions,
           )..loadHome(),
       child: Scaffold(
         backgroundColor: AppColors.surfaceContainerLow,
@@ -93,9 +90,9 @@ class HomePage extends StatelessWidget {
                           // ── Recent Transactions ──────────────────────────────
                           if (state is HomeWalletLoading ||
                               state is HomeInitial)
-                            const _RecentTransactionsSkeleton()
+                            const _AllTransactionsSkeleton()
                           else if (state is HomeLoaded)
-                            RecentTransactions(
+                            AllTransactions(
                               transactions: state.recentTransactions,
                               onViewAll: () {
                                 // TODO: navigate to transactions page
@@ -273,16 +270,15 @@ class _WalletErrorCard extends StatelessWidget {
 
 // ── Recent Transactions Skeleton ───────────────────────────────────────────
 
-class _RecentTransactionsSkeleton extends StatefulWidget {
-  const _RecentTransactionsSkeleton();
+class _AllTransactionsSkeleton extends StatefulWidget {
+  const _AllTransactionsSkeleton();
 
   @override
-  State<_RecentTransactionsSkeleton> createState() =>
-      _RecentTransactionsSkeletonState();
+  State<_AllTransactionsSkeleton> createState() =>
+      _AllTransactionsSkeletonState();
 }
 
-class _RecentTransactionsSkeletonState
-    extends State<_RecentTransactionsSkeleton>
+class _AllTransactionsSkeletonState extends State<_AllTransactionsSkeleton>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _shimmer;

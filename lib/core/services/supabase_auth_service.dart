@@ -6,10 +6,15 @@ import 'package:supabase/supabase.dart' show FunctionResponse;
 
 /// Handles phone OTP authentication using Supabase.
 class SupabaseService {
-  SupabaseService({SupabaseClient? client})
+  SupabaseService._({SupabaseClient? client})
     : _client = client ?? Supabase.instance.client;
 
   final SupabaseClient _client;
+
+  static final _instance = SupabaseService._();
+  factory SupabaseService() {
+    return _instance;
+  }
 
   /// Currently signed-in user, if any.
   User? get currentUser => _client.auth.currentUser;
@@ -90,7 +95,7 @@ class SupabaseService {
       if (response.status != 200) {
         final message =
             (response.data as Map<String, dynamic>?)?['error'] as String? ??
-            'Failed to set MPIN';
+            'Something went wrong';
         throw ServerException(message);
       }
 

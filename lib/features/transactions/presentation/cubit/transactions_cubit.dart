@@ -17,11 +17,18 @@ class TransactionsCubit extends Cubit<TransactionsState> {
   Future<void> loadTransactions() async {
     try {
       emit(const TransactionsLoading());
-      final transactions = await _getAllTransactions();
-      emit(TransactionsLoaded(transactions));
+      final result = await _getAllTransactions();
+      result.fold(
+        onSuccess: (value) {
+          emit(TransactionsLoaded(value));
+        },
+        onFailure: (failure) {
+          emit(TransactionsError(failure.message));
+        },
+      );
     } catch (e) {
       log(e.toString());
-      emit(TransactionsError(e.toString().replaceFirst('Exception: ', '')));
+      emit(TransactionsError(e.toString()));
     }
   }
 }
