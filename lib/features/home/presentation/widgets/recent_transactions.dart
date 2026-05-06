@@ -7,9 +7,9 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../transactions/domain/entities/transaction.dart';
 import '../../../transactions/presentation/widgets/transaction_item.dart';
 
-/// Recent transactions section shown on the home page.
-class AllTransactions extends StatelessWidget {
-  const AllTransactions({
+/// Recent transactions section shown on the home page as a sliver.
+class AllTransactionsSliver extends StatelessWidget {
+  const AllTransactionsSliver({
     super.key,
     required this.transactions,
     this.onViewAll,
@@ -20,43 +20,42 @@ class AllTransactions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: AppSpacing.base),
-        if (transactions.isEmpty)
-          _EmptyTransactions()
-        else
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.surfaceContainerLowest,
-              borderRadius: AppRadius.borderXl,
-              boxShadow: const [
-                BoxShadow(
-                  color: AppColors.shadowLevel1,
-                  blurRadius: 4,
-                  offset: Offset(0, 1),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                for (int i = 0; i < transactions.length; i++) ...[
-                  TransactionItem(transaction: transactions[i]),
-                  if (i < transactions.length - 1)
-                    Divider(
-                      height: 1,
-                      thickness: 1,
-                      color: AppColors.outlineVariant.withValues(alpha: 0.39),
-                      indent: AppSpacing.containerMargin,
-                      endIndent: AppSpacing.containerMargin,
-                    ),
-                ],
-              ],
-            ),
+    if (transactions.isEmpty) {
+      return SliverToBoxAdapter(child: _EmptyTransactions());
+    }
+
+    return SliverList(
+      delegate: SliverChildBuilderDelegate((context, index) {
+        // First item: top-rounded container header
+        // Last item: bottom-rounded container footer
+        final isFirst = index == 0;
+        final isLast = index == transactions.length - 1;
+
+        final borderRadius = BorderRadius.only(
+          topLeft: isFirst ? const Radius.circular(16) : Radius.zero,
+          topRight: isFirst ? const Radius.circular(16) : Radius.zero,
+          bottomLeft: isLast ? const Radius.circular(16) : Radius.zero,
+          bottomRight: isLast ? const Radius.circular(16) : Radius.zero,
+        );
+
+        return Container(
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainerLowest,
+            borderRadius: borderRadius,
+            boxShadow:
+                isFirst
+                    ? const [
+                      BoxShadow(
+                        color: AppColors.shadowLevel1,
+                        blurRadius: 4,
+                        offset: Offset(0, 1),
+                      ),
+                    ]
+                    : null,
           ),
-        const SizedBox(height: AppSpacing.md),
-      ],
+          child: TransactionItem(transaction: transactions[index]),
+        );
+      }, childCount: transactions.length),
     );
   }
 }

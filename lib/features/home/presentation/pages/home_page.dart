@@ -3,8 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocket_pay_demo/core/routes/app_routes.dart';
 import 'package:pocket_pay_demo/features/send_money/presentation/pages/send_money_page.dart';
 import 'package:pocket_pay_demo/features/transactions/domain/usecases/get_all_transactions.dart';
-import 'package:pocket_pay_demo/features/wallet/domain/entities/wallet.dart';
-
 import 'package:pocket_pay_demo/features/wallet/domain/usecases/get_wallet_balance.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
@@ -36,76 +34,104 @@ class HomePage extends StatelessWidget {
           builder: (context) {
             return SafeArea(
               top: false,
-              child: RefreshIndicator(
-                color: AppColors.primary,
-                onRefresh: () => context.read<HomeCubit>().loadHome(),
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.containerMargin,
-                    vertical: AppSpacing.md,
-                  ),
-                  child: BlocBuilder<HomeCubit, HomeState>(
-                    builder: (context, state) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // ── Wallet Card ──────────────────────────────────────
-                          if (state is HomeWalletLoading ||
-                              state is HomeInitial)
-                            const WalletCardSkeleton()
-                          else if (state is HomeLoaded)
-                            WalletCard(wallet: (state.wallet))
-                          else if (state is HomeError)
-                            _WalletErrorCard(message: state.message),
+              child: BlocBuilder<HomeCubit, HomeState>(
+                builder: (context, state) {
+                  return RefreshIndicator(
+                    color: AppColors.primary,
+                    onRefresh: () => context.read<HomeCubit>().loadHome(),
+                    child: CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        // ── Top padding ──────────────────────────────────────
+                        const SliverToBoxAdapter(
+                          child: SizedBox(height: AppSpacing.md),
+                        ),
 
-                          const SizedBox(height: AppSpacing.gutter),
-
-                          // ── Action Buttons ───────────────────────────────────
-                          Builder(
-                            builder: (ctx) {
-                              return ActionButtons(
-                                onAddMoney: () async {
-                                  final success = await showAddMoneyBottomSheet(
-                                    context,
-                                  );
-                                  if (success) ctx.read<HomeCubit>().loadHome();
-                                },
-                                onSendMoney: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder:
-                                          (_) => SendMoneyPage(() {
-                                            ctx.read<HomeCubit>().loadHome();
-                                          }),
-                                    ),
-                                  );
-                                  print("onSendMoney");
-                                },
-                              );
-                            },
+                        // ── Wallet Card (floating / sticky) ──────────────────
+                        SliverPersistentHeader(
+                          pinned: true,
+                          delegate: _WalletHeaderDelegate(
+                            state: state,
+                            onRetry: () => context.read<HomeCubit>().loadHome(),
                           ),
+                        ),
 
-                          const SizedBox(height: AppSpacing.md),
+                        const SliverToBoxAdapter(
+                          child: SizedBox(height: AppSpacing.gutter),
+                        ),
 
-                          // ── Recent Transactions ──────────────────────────────
-                          if (state is HomeWalletLoading ||
-                              state is HomeInitial)
-                            const _AllTransactionsSkeleton()
-                          else if (state is HomeLoaded)
-                            AllTransactions(
-                              transactions: state.recentTransactions ?? [],
+                        // ── Action Buttons ───────────────────────────────────
+                        SliverPadding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.containerMargin,
+                          ),
+                          sliver: SliverToBoxAdapter(
+                            child: Builder(
+                              builder: (ctx) {
+                                return ActionButtons(
+                                  onAddMoney: () async {
+                                    await showAddMoneyBottomSheet(context);
+                                    if (ctx.mounted) {
+                                      ctx.read<HomeCubit>().loadHome();
+                                    }
+                                  },
+                                  onSendMoney: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder:
+                                            (_) => SendMoneyPage(() {
+                                              if (ctx.mounted) {
+                                                ctx
+                                                    .read<HomeCubit>()
+                                                    .loadHome();
+                                              }
+                                            }),
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+
+                        const SliverToBoxAdapter(
+                          child: SizedBox(height: AppSpacing.md),
+                        ),
+
+                        // ── Recent Transactions ──────────────────────────────
+                        if (state is HomeWalletLoading || state is HomeInitial)
+                          const SliverToBoxAdapter(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: AppSpacing.containerMargin,
+                              ),
+                              child: _AllTransactionsSkeleton(),
+                            ),
+                          )
+                        else if (state is HomeLoaded)
+                          SliverPadding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.containerMargin,
+                            ),
+                            sliver: AllTransactionsSliver(
+                              transactions: state.recentTransactions,
                               onViewAll: () {
                                 // TODO: navigate to transactions page
                               },
-                            )
-                          else if (state is HomeError)
-                            const SizedBox.shrink(),
-                        ],
-                      );
-                    },
-                  ),
-                ),
+                            ),
+                          )
+                        else
+                          const SliverToBoxAdapter(child: SizedBox.shrink()),
+
+                        // ── Bottom padding ───────────────────────────────────
+                        const SliverToBoxAdapter(
+                          child: SizedBox(height: AppSpacing.md),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             );
           },
@@ -411,6 +437,175 @@ class _AllTransactionsSkeletonState extends State<_AllTransactionsSkeleton>
           ],
         );
       },
+    );
+  }
+}
+
+// ── Wallet Persistent Header Delegate ─────────────────────────────────────
+
+class _WalletHeaderDelegate extends SliverPersistentHeaderDelegate {
+  const _WalletHeaderDelegate({required this.state, required this.onRetry});
+
+  final HomeState state;
+  final VoidCallback onRetry;
+
+  /// Full card height (card padding + label + balance + currency + spacing)
+  static const double _expandedHeight = 148.0;
+
+  /// Compact floating bar height
+  static const double _collapsedHeight = 56.0;
+
+  @override
+  double get maxExtent => _expandedHeight + AppSpacing.md; // top padding
+  @override
+  double get minExtent => _collapsedHeight;
+
+  @override
+  bool shouldRebuild(_WalletHeaderDelegate old) => old.state != state;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    // 0.0 = fully expanded, 1.0 = fully collapsed
+    final t = (shrinkOffset / (maxExtent - minExtent)).clamp(0.0, 1.0);
+    final isCollapsed = t > 0.85;
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // ── Expanded card (fades out as we scroll) ──────────────────────
+        Positioned(
+          top: AppSpacing.md,
+          left: AppSpacing.containerMargin,
+          right: AppSpacing.containerMargin,
+          child: Opacity(
+            opacity: (1 - t * 2).clamp(0.0, 1.0),
+            child: _buildExpandedContent(context),
+          ),
+        ),
+
+        // ── Collapsed floating bar (fades in as we scroll) ───────────────
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 150),
+            opacity: isCollapsed ? 1.0 : 0.0,
+            child: _CollapsedWalletBar(state: state),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildExpandedContent(BuildContext context) {
+    if (state is HomeWalletLoading || state is HomeInitial) {
+      return const WalletCardSkeleton();
+    }
+    if (state is HomeLoaded) {
+      return WalletCard(wallet: (state as HomeLoaded).wallet);
+    }
+    if (state is HomeError) {
+      return _WalletErrorCard(message: (state as HomeError).message);
+    }
+    return const SizedBox.shrink();
+  }
+}
+
+// ── Collapsed floating balance bar ────────────────────────────────────────
+
+class _CollapsedWalletBar extends StatelessWidget {
+  const _CollapsedWalletBar({required this.state});
+
+  final HomeState state;
+
+  String _balance(HomeState state) {
+    if (state is HomeLoaded) {
+      final w = state.wallet;
+      return _formatBalance(w.balance, w.currency);
+    }
+    return '—';
+  }
+
+  String _formatBalance(double balance, String currency) {
+    final symbol = _currencySymbol(currency);
+    final formatted = balance.toStringAsFixed(2);
+    final parts = formatted.split('.');
+    final intPart = parts[0];
+    final decPart = parts[1];
+    final buffer = StringBuffer();
+    for (int i = 0; i < intPart.length; i++) {
+      if (i > 0 && (intPart.length - i) % 3 == 0) buffer.write(',');
+      buffer.write(intPart[i]);
+    }
+    return '$symbol$buffer.$decPart';
+  }
+
+  String _currencySymbol(String currency) {
+    switch (currency.toUpperCase()) {
+      case 'USD':
+        return '\$';
+      case 'EUR':
+        return '€';
+      case 'GBP':
+        return '£';
+      case 'INR':
+        return '₹';
+      default:
+        return currency;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: _WalletHeaderDelegate._collapsedHeight,
+      decoration: const BoxDecoration(
+        color: AppColors.primary,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowLevel2,
+            blurRadius: 12,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.containerMargin,
+      ),
+      child: Row(
+        children: [
+          Text(
+            'Balance',
+            style: AppTypography.labelSm.copyWith(
+              color: AppColors.inversePrimary.withValues(alpha: 0.7),
+              letterSpacing: 1.1,
+              fontSize: 11,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Text(
+            '·',
+            style: AppTypography.labelSm.copyWith(
+              color: AppColors.inversePrimary.withValues(alpha: 0.4),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Text(
+            _balance(state),
+            style: AppTypography.h2.copyWith(
+              color: AppColors.onPrimary,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.5,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

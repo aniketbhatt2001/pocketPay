@@ -47,7 +47,7 @@ class HomeCubit extends Cubit<HomeState> {
         onSuccess: (t) => transactions = t,
         onFailure: (f) => txError = f.message,
       );
-
+      await Future.delayed(Duration(seconds: 1));
       emit(
         HomeLoaded(
           wallet: wallet ?? Wallet(),
