@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pocket_pay_demo/core/services/supabase_auth_service.dart';
-import 'package:pocket_pay_demo/features/auth/data/repositories/auth_repository_impl.dart';
-import 'package:pocket_pay_demo/features/auth/domain/usecases/set_user_profile_usecase.dart';
+import 'package:pocket_pay_demo/core/di/service_locator.dart';
+import 'package:pocket_pay_demo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:pocket_pay_demo/features/profile/presentation/cubit/profile_setup_cubit.dart';
 
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../../core/widgets/app_button.dart';
-import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/widgets/login_background.dart';
-
-import '../cubit/profile_setup_cubit.dart';
 
 /// Entry point — injects dependencies and wraps the view.
 class ProfileSetupScreen extends StatelessWidget {
@@ -19,13 +16,7 @@ class ProfileSetupScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) {
-        return ProfileSetupCubit(
-          updateProfileUseCase: SetUserProfileUseCase(
-            AuthRepositoryImpl(SupabaseService()),
-          ),
-        );
-      },
+      create: (_) => sl<ProfileSetupCubit>(),
       child: const _ProfileSetupView(),
     );
   }

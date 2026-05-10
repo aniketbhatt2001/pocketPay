@@ -1,27 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pocket_pay_demo/core/services/supabase_auth_service.dart';
-import 'package:pocket_pay_demo/features/auth/data/repositories/auth_repository_impl.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:pocket_pay_demo/features/auth/domain/usecases/check_session_usecase.dart';
-import 'package:pocket_pay_demo/features/auth/domain/usecases/send_otp_usecase.dart';
-import 'package:pocket_pay_demo/features/auth/domain/usecases/sign_out_usecase.dart';
-import 'package:pocket_pay_demo/features/auth/domain/usecases/verify_otp_usecase.dart';
+import 'package:pocket_pay_demo/core/database/app_database.dart';
+import 'package:pocket_pay_demo/core/di/service_locator.dart';
 import 'package:pocket_pay_demo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/config/app_config.dart';
 import 'core/routes/app_router.dart';
 import 'core/theme/theme.dart';
 
+/// Kept for Drift — AppDatabase is also registered in GetIt, but the router
+/// still references this symbol. Both point to the same instance via sl.
+AppDatabase get appDatabase => sl<AppDatabase>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load .env first — all other config reads depend on it.
+  // 1. Load .env — all other config reads depend on it.
   await AppConfig.load();
 
+  // 2. Initialise Supabase.
   await Supabase.initialize(
     url: AppConfig.supabaseUrl,
     anonKey: AppConfig.supabaseAnonKey,
   );
+
+  // 3. Wire up all dependencies.
+  setupServiceLocator();
 
   runApp(const MainApp());
 }
@@ -33,18 +37,8 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(
-          create: (_) {
-            final repo = AuthRepositoryImpl(SupabaseService());
-            return AuthBloc(
-              sendOtpUseCase: SendOtpUseCase(repo),
-              verifyOtpUseCase: VerifyOtpUseCase(repo),
-              checkSessionUseCase: CheckSessionUseCase(repo),
-              signOutUseCase: SignOutUseCase(repo),
-              // checkMpinUseCase: CheckMpinUseCase(repo),
-            );
-          },
-        ),
+        // AuthBloc lives at the root so every screen can read it.
+        BlocProvider<AuthBloc>(create: (_) => sl<AuthBloc>()),
       ],
       child: MaterialApp(
         title: 'PocketPay',

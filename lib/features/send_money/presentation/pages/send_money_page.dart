@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pocket_pay_demo/core/di/service_locator.dart';
 import 'package:pocket_pay_demo/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:pocket_pay_demo/features/auth/presentation/screens/enter_mpin_screen.dart';
-import 'package:pocket_pay_demo/features/wallet/data/datasources/wallet_remote_datasource.dart';
-import 'package:pocket_pay_demo/features/wallet/data/repositories/wallet_repository_impl.dart';
-import 'package:pocket_pay_demo/features/wallet/domain/repositories/wallet_repository.dart';
-import 'package:pocket_pay_demo/features/wallet/domain/usecases/send_money.dart';
+import 'package:pocket_pay_demo/features/send_money/presentation/cubit/send_money_cubit.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../cubit/send_money_cubit.dart';
 import '../widgets/amount_input.dart';
 import '../widgets/note_input.dart';
 import '../widgets/pay_button.dart';
@@ -28,7 +25,7 @@ class _SendMoneyPageState extends State<SendMoneyPage> {
   final _recipientController = TextEditingController();
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
-  final globalKey = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
@@ -41,6 +38,7 @@ class _SendMoneyPageState extends State<SendMoneyPage> {
   void _onPay(SendMoneyCubit sendMoneyCubit) {
     final authState = context.read<AuthBloc>().state;
     if (authState is! AuthAuthenticated) return;
+
     final recipient = _recipientController.text.trim();
     final amountText = _amountController.text.trim();
     final note = _noteController.text.trim();
@@ -60,13 +58,8 @@ class _SendMoneyPageState extends State<SendMoneyPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create:
-          (context) => SendMoneyCubit(
-            sendMoney: SendMoneyUseCase(
-              WalletRepositoryImpl(WalletRemoteDatasource()),
-            ),
-          ),
+    return BlocProvider<SendMoneyCubit>(
+      create: (_) => sl<SendMoneyCubit>(),
       child: Scaffold(
         backgroundColor: AppColors.surfaceContainerLow,
         appBar: AppBar(
@@ -85,8 +78,8 @@ class _SendMoneyPageState extends State<SendMoneyPage> {
               final navigator = Navigator.of(context);
               navigator.pop();
               messenger.showSnackBar(
-                SnackBar(
-                  content: Text("Money Sent succesfully"),
+                const SnackBar(
+                  content: Text('Money sent successfully'),
                   backgroundColor: AppColors.secondary,
                 ),
               );
@@ -102,7 +95,7 @@ class _SendMoneyPageState extends State<SendMoneyPage> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(AppSpacing.containerMargin),
             child: Form(
-              key: globalKey,
+              key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -116,9 +109,7 @@ class _SendMoneyPageState extends State<SendMoneyPage> {
                     builder:
                         (context, state) => PayButton(
                           onPressed: () async {
-                            //
-
-                            if (globalKey!.currentState!.validate()) {
+                            if (_formKey.currentState!.validate()) {
                               await Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder:
@@ -129,7 +120,9 @@ class _SendMoneyPageState extends State<SendMoneyPage> {
                                       ),
                                 ),
                               );
-                              _onPay(context.read<SendMoneyCubit>());
+                              if (context.mounted) {
+                                _onPay(context.read<SendMoneyCubit>());
+                              }
                             }
                           },
                           isLoading: state is SendMoneyLoading,

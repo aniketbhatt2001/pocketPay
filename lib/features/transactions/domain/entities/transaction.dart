@@ -39,8 +39,9 @@ class Transaction {
   final String? referenceId;
   final double? balanceBefore;
   final double? balanceAfter;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  // Nullable to match Supabase schema (timestamptz NULL DEFAULT now())
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   const Transaction({
     required this.id,
@@ -53,8 +54,8 @@ class Transaction {
     this.referenceId,
     this.balanceBefore,
     this.balanceAfter,
-    required this.createdAt,
-    required this.updatedAt,
+    this.createdAt,
+    this.updatedAt,
   });
 
   // Convenience getters

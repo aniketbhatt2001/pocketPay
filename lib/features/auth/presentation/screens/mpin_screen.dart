@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pocket_pay_demo/features/auth/domain/usecases/verify_mpin_usecase.dart';
+import 'package:pocket_pay_demo/core/di/service_locator.dart';
 import 'package:pocket_pay_demo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:pocket_pay_demo/features/auth/presentation/bloc/mpin_cubit.dart';
 import 'package:pocket_pay_demo/features/profile/presentation/screens/profile_setup_screen.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../../core/widgets/app_button.dart';
-import '../../../../core/services/supabase_auth_service.dart';
-import '../../data/repositories/auth_repository_impl.dart';
-import '../../domain/usecases/set_mpin_usecase.dart';
-import '../bloc/mpin_cubit.dart';
 import '../widgets/login_background.dart';
 
 class MpinScreen extends StatefulWidget {
@@ -120,13 +116,7 @@ class MpinScreenState extends State<MpinScreen>
   Widget build(BuildContext context) {
     // final repo = AuthRepositoryImpl(SupabaseService());
     return BlocProvider(
-      create: (_) {
-        final repo = AuthRepositoryImpl(SupabaseService());
-        return MpinCubit(
-          setMpinUseCase: SetMpinUseCase(repo),
-          verifyMpinUseCase: VerifyMpinUseCase(repo),
-        );
-      },
+      create: (_) => sl<MpinCubit>(),
       child: BlocListener<MpinCubit, MpinState>(
         listener: (context, state) {
           if (state is MpinSuccess) {

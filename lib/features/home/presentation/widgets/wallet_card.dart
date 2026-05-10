@@ -131,7 +131,7 @@ class _WalletCardContent extends StatelessWidget {
 
   String _currencySymbol(String currency) {
     switch (currency.toUpperCase()) {
-      case 'USD':
+      case 'INR':
         return '\$';
       case 'EUR':
         return '€';

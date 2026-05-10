@@ -8,23 +8,19 @@ import '../../domain/usecases/get_all_transactions.dart';
 part 'transactions_state.dart';
 
 class TransactionsCubit extends Cubit<TransactionsState> {
-  TransactionsCubit({required GetAllTransactions getAllTransactions})
-    : _getAllTransactions = getAllTransactions,
+  TransactionsCubit({required SyncTransactions syncTransactions})
+    : _syncTransactions = syncTransactions,
       super(const TransactionsInitial());
 
-  final GetAllTransactions _getAllTransactions;
+  final SyncTransactions _syncTransactions;
 
   Future<void> loadTransactions() async {
     try {
       emit(const TransactionsLoading());
-      final result = await _getAllTransactions();
+      final result = await _syncTransactions();
       result.fold(
-        onSuccess: (value) {
-          emit(TransactionsLoaded(value));
-        },
-        onFailure: (failure) {
-          emit(TransactionsError(failure.message));
-        },
+        onSuccess: (value) => emit(TransactionsLoaded(value)),
+        onFailure: (failure) => emit(TransactionsError(failure.message)),
       );
     } catch (e) {
       log(e.toString());

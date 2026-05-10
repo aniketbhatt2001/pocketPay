@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocket_pay_demo/core/routes/app_routes.dart';
 import 'package:pocket_pay_demo/features/send_money/presentation/pages/send_money_page.dart';
-import 'package:pocket_pay_demo/features/transactions/domain/usecases/get_all_transactions.dart';
-import 'package:pocket_pay_demo/features/wallet/domain/usecases/get_wallet_balance.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -15,127 +13,116 @@ import '../widgets/recent_transactions.dart';
 import '../widgets/wallet_card.dart';
 
 class HomePage extends StatelessWidget {
-  final GetWalletBalanceUseCase getWalletBalance;
-  final GetAllTransactions getAllTransactions;
-  const HomePage(this.getWalletBalance, this.getAllTransactions, {super.key});
+  const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create:
-          (context) => HomeCubit(
-            getWalletBalance: getWalletBalance,
-            getAllTransactions: getAllTransactions,
-          )..loadHome(),
-      child: Scaffold(
-        backgroundColor: AppColors.surfaceContainerLow,
-        appBar: const _HomeAppBar(),
-        body: Builder(
-          builder: (context) {
-            return SafeArea(
-              top: false,
-              child: BlocBuilder<HomeCubit, HomeState>(
-                builder: (context, state) {
-                  return RefreshIndicator(
-                    color: AppColors.primary,
-                    onRefresh: () => context.read<HomeCubit>().loadHome(),
-                    child: CustomScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      slivers: [
-                        // ── Top padding ──────────────────────────────────────
-                        const SliverToBoxAdapter(
-                          child: SizedBox(height: AppSpacing.md),
-                        ),
+    return Scaffold(
+      backgroundColor: AppColors.surfaceContainerLow,
+      appBar: const _HomeAppBar(),
+      body: Builder(
+        builder: (context) {
+          return SafeArea(
+            top: false,
+            child: BlocBuilder<HomeCubit, HomeState>(
+              builder: (context, state) {
+                return RefreshIndicator(
+                  color: AppColors.primary,
+                  onRefresh: () => context.read<HomeCubit>().loadHome(),
+                  child: CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    slivers: [
+                      // ── Top padding ──────────────────────────────────────
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: AppSpacing.md),
+                      ),
 
-                        // ── Wallet Card (floating / sticky) ──────────────────
-                        SliverPersistentHeader(
-                          pinned: true,
-                          delegate: _WalletHeaderDelegate(
-                            state: state,
-                            onRetry: () => context.read<HomeCubit>().loadHome(),
+                      // ── Wallet Card (floating / sticky) ──────────────────
+                      SliverPersistentHeader(
+                        pinned: true,
+                        delegate: _WalletHeaderDelegate(
+                          state: state,
+                          onRetry: () => context.read<HomeCubit>().loadHome(),
+                        ),
+                      ),
+
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: AppSpacing.gutter),
+                      ),
+
+                      // ── Action Buttons ───────────────────────────────────
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.containerMargin,
+                        ),
+                        sliver: SliverToBoxAdapter(
+                          child: Builder(
+                            builder: (ctx) {
+                              return ActionButtons(
+                                onAddMoney: () async {
+                                  await showAddMoneyBottomSheet(context);
+                                  if (ctx.mounted) {
+                                    ctx.read<HomeCubit>().loadHome();
+                                  }
+                                },
+                                onSendMoney: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder:
+                                          (_) => SendMoneyPage(() {
+                                            if (ctx.mounted) {
+                                              ctx.read<HomeCubit>().loadHome();
+                                            }
+                                          }),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
                           ),
                         ),
+                      ),
 
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: AppSpacing.md),
+                      ),
+
+                      // ── Recent Transactions ──────────────────────────────
+                      if (state is HomeWalletLoading || state is HomeInitial)
                         const SliverToBoxAdapter(
-                          child: SizedBox(height: AppSpacing.gutter),
-                        ),
-
-                        // ── Action Buttons ───────────────────────────────────
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: AppSpacing.containerMargin,
+                            ),
+                            child: _AllTransactionsSkeleton(),
+                          ),
+                        )
+                      else if (state is HomeLoaded)
                         SliverPadding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.containerMargin,
                           ),
-                          sliver: SliverToBoxAdapter(
-                            child: Builder(
-                              builder: (ctx) {
-                                return ActionButtons(
-                                  onAddMoney: () async {
-                                    await showAddMoneyBottomSheet(context);
-                                    if (ctx.mounted) {
-                                      ctx.read<HomeCubit>().loadHome();
-                                    }
-                                  },
-                                  onSendMoney: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder:
-                                            (_) => SendMoneyPage(() {
-                                              if (ctx.mounted) {
-                                                ctx
-                                                    .read<HomeCubit>()
-                                                    .loadHome();
-                                              }
-                                            }),
-                                      ),
-                                    );
-                                  },
-                                );
-                              },
-                            ),
+                          sliver: AllTransactionsSliver(
+                            transactions: state.recentTransactions,
+                            onViewAll: () {
+                              // TODO: navigate to transactions page
+                            },
                           ),
-                        ),
+                        )
+                      else
+                        const SliverToBoxAdapter(child: SizedBox.shrink()),
 
-                        const SliverToBoxAdapter(
-                          child: SizedBox(height: AppSpacing.md),
-                        ),
-
-                        // ── Recent Transactions ──────────────────────────────
-                        if (state is HomeWalletLoading || state is HomeInitial)
-                          const SliverToBoxAdapter(
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: AppSpacing.containerMargin,
-                              ),
-                              child: _AllTransactionsSkeleton(),
-                            ),
-                          )
-                        else if (state is HomeLoaded)
-                          SliverPadding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.containerMargin,
-                            ),
-                            sliver: AllTransactionsSliver(
-                              transactions: state.recentTransactions,
-                              onViewAll: () {
-                                // TODO: navigate to transactions page
-                              },
-                            ),
-                          )
-                        else
-                          const SliverToBoxAdapter(child: SizedBox.shrink()),
-
-                        // ── Bottom padding ───────────────────────────────────
-                        const SliverToBoxAdapter(
-                          child: SizedBox(height: AppSpacing.md),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            );
-          },
-        ),
+                      // ── Bottom padding ───────────────────────────────────
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: AppSpacing.md),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          );
+        },
       ),
     );
   }
@@ -473,6 +460,9 @@ class _WalletHeaderDelegate extends SliverPersistentHeaderDelegate {
     final t = (shrinkOffset / (maxExtent - minExtent)).clamp(0.0, 1.0);
     final isCollapsed = t > 0.85;
 
+    final isRefreshing =
+        state is HomeLoaded && (state as HomeLoaded).isRefreshing;
+
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -498,6 +488,21 @@ class _WalletHeaderDelegate extends SliverPersistentHeaderDelegate {
             child: _CollapsedWalletBar(state: state),
           ),
         ),
+
+        // ── Background sync indicator ────────────────────────────────────
+        // Shown as a thin bar at the very bottom of the header while
+        // fresh data is being fetched on top of cached content.
+        if (isRefreshing)
+          const Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: LinearProgressIndicator(
+              minHeight: 2,
+              backgroundColor: Colors.transparent,
+              color: AppColors.primary,
+            ),
+          ),
       ],
     );
   }
@@ -542,12 +547,12 @@ class _CollapsedWalletBar extends StatelessWidget {
       if (i > 0 && (intPart.length - i) % 3 == 0) buffer.write(',');
       buffer.write(intPart[i]);
     }
-    return '$symbol$buffer.$decPart';
+    return '$symbol $buffer.$decPart';
   }
 
   String _currencySymbol(String currency) {
     switch (currency.toUpperCase()) {
-      case 'USD':
+      case 'INR':
         return '\$';
       case 'EUR':
         return '€';

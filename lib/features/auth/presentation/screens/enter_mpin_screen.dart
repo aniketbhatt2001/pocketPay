@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pocket_pay_demo/core/services/supabase_auth_service.dart';
-import 'package:pocket_pay_demo/features/auth/data/repositories/auth_repository_impl.dart';
-import 'package:pocket_pay_demo/features/auth/domain/usecases/set_mpin_usecase.dart';
-import 'package:pocket_pay_demo/features/auth/domain/usecases/verify_mpin_usecase.dart';
+import 'package:pocket_pay_demo/core/di/service_locator.dart';
 import 'package:pocket_pay_demo/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:pocket_pay_demo/features/auth/presentation/bloc/mpin_cubit.dart';
 
@@ -61,13 +58,7 @@ class _EnterMpinViewState extends State<_EnterMpinView> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) {
-        final repo = AuthRepositoryImpl(SupabaseService());
-        return MpinCubit(
-          setMpinUseCase: SetMpinUseCase(repo),
-          verifyMpinUseCase: VerifyMpinUseCase(repo),
-        );
-      },
+      create: (context) => sl<MpinCubit>(),
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: _EnterMpinAppBar(

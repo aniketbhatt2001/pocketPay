@@ -16,8 +16,9 @@ class TransactionItem extends StatelessWidget {
     return '$sign₹${tx.amount.toStringAsFixed(2)}';
   }
 
-  String _formatDate(DateTime dt) {
-    final local = dt.toLocal(); // ✅ FIX
+  String _formatDate(DateTime? dt) {
+    if (dt == null) return '—';
+    final local = dt.toLocal();
 
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);

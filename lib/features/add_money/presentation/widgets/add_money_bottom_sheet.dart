@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pocket_pay_demo/core/di/service_locator.dart';
 import 'package:pocket_pay_demo/core/widgets/app_button.dart';
 import 'package:pocket_pay_demo/features/auth/presentation/bloc/auth_bloc.dart';
 
-import '../../../../core/config/app_config.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../features/wallet/data/datasources/wallet_remote_datasource.dart';
-import '../../../../features/wallet/data/repositories/wallet_repository_impl.dart';
-import '../../../../features/wallet/domain/usecases/add_money.dart';
 import '../cubit/add_money_cubit.dart';
 
 Future<bool> showAddMoneyBottomSheet(BuildContext context) async {
@@ -19,17 +16,11 @@ Future<bool> showAddMoneyBottomSheet(BuildContext context) async {
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (_) {
-      final walletRepo = WalletRepositoryImpl(WalletRemoteDatasource());
-      return BlocProvider(
-        create:
-            (_) => AddMoneyCubit(
-              addMoney: AddMoneyUseCase(walletRepo),
-              razorpayKeyId: AppConfig.razorpayKeyId,
-            ),
-        child: const AddMoneySheet(),
-      );
-    },
+    builder:
+        (_) => BlocProvider<AddMoneyCubit>(
+          create: (_) => sl<AddMoneyCubit>(),
+          child: const AddMoneySheet(),
+        ),
   );
   return result ?? false;
 }

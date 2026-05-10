@@ -15,7 +15,7 @@ class WalletModel extends Wallet {
       id: json['id'] as String,
       userId: json['user_id'] as String,
       balance: (json['balance'] as num).toDouble(),
-      currency: (json['currency'] as String?) ?? 'USD',
+      currency: (json['currency'] as String?) ?? 'INR',
       updatedAt:
           json['updated_at'] != null
               ? DateTime.tryParse(json['updated_at'] as String)
