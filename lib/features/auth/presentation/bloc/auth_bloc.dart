@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/auth_user.dart';
 
 import '../../domain/usecases/check_session_usecase.dart';
+import '../../domain/usecases/register_fcm_token_usecase.dart';
 import '../../domain/usecases/send_otp_usecase.dart';
 import '../../domain/usecases/sign_out_usecase.dart';
 import '../../domain/usecases/verify_otp_usecase.dart';
@@ -16,16 +17,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final VerifyOtpUseCase _verifyOtp;
   final CheckSessionUseCase _checkSession;
   final SignOutUseCase _signOut;
+  final RegisterFcmTokenUseCase _registerFcmToken;
 
   AuthBloc({
     required SendOtpUseCase sendOtpUseCase,
     required VerifyOtpUseCase verifyOtpUseCase,
     required CheckSessionUseCase checkSessionUseCase,
     required SignOutUseCase signOutUseCase,
+    required RegisterFcmTokenUseCase registerFcmTokenUseCase,
   }) : _sendOtp = sendOtpUseCase,
        _verifyOtp = verifyOtpUseCase,
        _checkSession = checkSessionUseCase,
        _signOut = signOutUseCase,
+       _registerFcmToken = registerFcmTokenUseCase,
        super(AuthInitial()) {
     on<AppStarted>(_onAppStarted);
     on<SendOtpRequested>(_onSendOtp);
@@ -59,9 +63,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       log("_onAppStarted");
       emit(const AuthLoading());
       final result = await _checkSession();
+
       result.fold(
         onSuccess: (value) {
           emit(AuthAuthenticated(value));
+          _registerFcmToken(userId: value.uid);
         },
         onFailure: (failure) {
           emit(AuthUnAuthenticated(msg: failure.message));

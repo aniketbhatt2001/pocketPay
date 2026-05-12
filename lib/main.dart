@@ -1,7 +1,10 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocket_pay_demo/core/database/app_database.dart';
 import 'package:pocket_pay_demo/core/di/service_locator.dart';
+import 'package:pocket_pay_demo/core/services/firebase_service.dart';
 import 'package:pocket_pay_demo/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/config/app_config.dart';
@@ -18,14 +21,22 @@ void main() async {
   // 1. Load .env — all other config reads depend on it.
   await AppConfig.load();
 
-  // 2. Initialise Supabase.
+  // 2. Initialise Firebase and register the background message handler
+  //    before any other Firebase usage.
+  await Firebase.initializeApp();
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+  // 3. Initialise Supabase.
   await Supabase.initialize(
     url: AppConfig.supabaseUrl,
     anonKey: AppConfig.supabaseAnonKey,
   );
 
-  // 3. Wire up all dependencies.
+  // 4. Wire up all dependencies.
   setupServiceLocator();
+
+  // 5. Initialise FCM (permission request + notification channel setup).
+  await sl<FirebaseService>().init();
 
   runApp(const MainApp());
 }

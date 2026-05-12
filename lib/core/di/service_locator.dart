@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:pocket_pay_demo/core/config/app_config.dart';
 import 'package:pocket_pay_demo/core/database/app_database.dart';
+import 'package:pocket_pay_demo/core/services/firebase_service.dart';
 import 'package:pocket_pay_demo/core/services/supabase_auth_service.dart';
 
 // ── Auth ──────────────────────────────────────────────────────────────────
@@ -11,6 +12,7 @@ import 'package:pocket_pay_demo/features/auth/domain/usecases/check_session_usec
 import 'package:pocket_pay_demo/features/auth/domain/usecases/send_otp_usecase.dart';
 import 'package:pocket_pay_demo/features/auth/domain/usecases/set_mpin_usecase.dart';
 import 'package:pocket_pay_demo/features/auth/domain/usecases/set_user_profile_usecase.dart';
+import 'package:pocket_pay_demo/features/auth/domain/usecases/register_fcm_token_usecase.dart';
 import 'package:pocket_pay_demo/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:pocket_pay_demo/features/auth/domain/usecases/verify_mpin_usecase.dart';
 import 'package:pocket_pay_demo/features/auth/domain/usecases/verify_otp_usecase.dart';
@@ -47,6 +49,9 @@ final GetIt sl = GetIt.instance;
 void setupServiceLocator() {
   // ── Core ────────────────────────────────────────────────────────────────
 
+  // Firebase service — singleton (FCM token + notification handling)
+  sl.registerLazySingleton<FirebaseService>(() => FirebaseService());
+
   // Supabase wrapper — singleton (one auth session for the whole app)
   sl.registerLazySingleton<SupabaseService>(() => SupabaseService());
 
@@ -60,7 +65,11 @@ void setupServiceLocator() {
   );
 
   sl.registerLazySingleton<AuthRepository>(
-    () => AuthRepositoryImpl(sl<SupabaseService>(), sl<AuthLocalDatasource>()),
+    () => AuthRepositoryImpl(
+      sl<SupabaseService>(),
+      sl<AuthLocalDatasource>(),
+      sl<FirebaseService>(),
+    ),
   );
 
   sl.registerLazySingleton<SendOtpUseCase>(
@@ -84,6 +93,9 @@ void setupServiceLocator() {
   sl.registerLazySingleton<SetUserProfileUseCase>(
     () => SetUserProfileUseCase(sl<AuthRepository>()),
   );
+  sl.registerLazySingleton<RegisterFcmTokenUseCase>(
+    () => RegisterFcmTokenUseCase(sl<AuthRepository>()),
+  );
 
   // AuthBloc — factory so each registration gives a fresh instance,
   // but we keep one alive at the top of the widget tree via MultiBlocProvider.
@@ -93,6 +105,7 @@ void setupServiceLocator() {
       verifyOtpUseCase: sl<VerifyOtpUseCase>(),
       checkSessionUseCase: sl<CheckSessionUseCase>(),
       signOutUseCase: sl<SignOutUseCase>(),
+      registerFcmTokenUseCase: sl<RegisterFcmTokenUseCase>(),
     ),
   );
 

@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:pocket_pay_demo/core/error/exceptions.dart';
 import 'package:pocket_pay_demo/core/error/failures.dart';
 import 'package:pocket_pay_demo/core/result/result.dart';
+import 'package:pocket_pay_demo/core/services/firebase_service.dart';
 import 'package:pocket_pay_demo/features/auth/data/local/auth_local_datasource.dart';
 import 'package:pocket_pay_demo/features/auth/data/models/auth_model.dart';
 import '../../../../core/services/supabase_auth_service.dart';
@@ -10,10 +11,11 @@ import '../../domain/entities/auth_user.dart';
 import '../../domain/repositories/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
-  AuthRepositoryImpl(this._service, this._local);
+  AuthRepositoryImpl(this._service, this._local, this._firebase);
 
   final SupabaseService _service;
   final AuthLocalDatasource _local;
+  final FirebaseService _firebase;
 
   @override
   Future<Result<String>> sendOtp({required String phoneNumber}) async {
@@ -169,6 +171,23 @@ class AuthRepositoryImpl implements AuthRepository {
       await _service.signOut();
       return const Result.success(null);
     } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
+  }
+
+  @override
+  Future<Result<void>> registerFcmToken({required String userId}) async {
+    try {
+      final token = await _firebase.getToken();
+      if (token == null) return const Result.success(null);
+      final res = await _service.invokeFn(
+        'set-fcm-token',
+        body: {'user_id': userId, 'fcm_token': token},
+      );
+      print(res);
+      return const Result.success(null);
+    } catch (e) {
+      print("error $e");
       return Result.failure(mapExceptionToFailure(e));
     }
   }

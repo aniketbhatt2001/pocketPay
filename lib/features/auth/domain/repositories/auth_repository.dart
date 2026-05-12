@@ -41,6 +41,9 @@ abstract class AuthRepository {
 
   /// Signs the current user out.
   Future<Result<void>> signOut();
+
+  /// Fetches the FCM token and registers it via the edge function.
+  Future<Result<void>> registerFcmToken({required String userId});
   Future<Result<void>> setUserProfile({
     required String userId,
     required String email,
